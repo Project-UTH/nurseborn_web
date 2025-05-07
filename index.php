@@ -23,6 +23,13 @@ $bookingActions = [
     'set_service'
 ];
 
+// Danh sách các action thuộc NurseController
+$nurseControllerActions = [
+    'pending_bookings',
+    'accept_booking',
+    'cancel_booking'
+];
+
 // Lấy action từ query string, mặc định là 'home'
 $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING) ?? 'home';
 
@@ -34,6 +41,8 @@ try {
         $controllerFile = __DIR__ . '/controllers/NotificationController.php';
     } elseif (in_array($action, $bookingActions)) {
         $controllerFile = __DIR__ . '/controllers/BookingController.php';
+    } elseif (in_array($action, $nurseControllerActions)) {
+        $controllerFile = __DIR__ . '/controllers/NurseController.php';
     } else {
         $controllerFile = __DIR__ . '/controllers/UserController.php';
     }
