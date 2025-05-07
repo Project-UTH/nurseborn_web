@@ -103,6 +103,29 @@ class NurseProfileModel {
         return $profile;
     }
 
+        // Lấy danh sách hồ sơ y tá được phê duyệt theo danh sách user_id
+        public function getApprovedNurseProfilesByUserIds($userIds) {
+            if (empty($userIds)) {
+                return [];
+            }
+            $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+            $stmt = $this->conn->prepare(
+                "SELECT np.*, u.full_name, u.is_verified 
+                 FROM nurse_profiles np 
+                 JOIN users u ON np.user_id = u.user_id 
+                 WHERE np.user_id IN ($placeholders) AND np.is_approved = 1"
+            );
+            $stmt->bind_param(str_repeat('i', count($userIds)), ...$userIds);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $profiles = [];
+            while ($row = $result->fetch_assoc()) {
+                $row['certificates'] = $this->certificateModel->getCertificatesByNurseProfileId($row['nurse_profile_id']);
+                $profiles[] = $row;
+            }
+            return $profiles;
+        }
+
     // Xóa hồ sơ y tá
     public function deleteNurseProfile($userId) {
         $stmt = $this->conn->prepare("SELECT nurse_profile_id FROM nurse_profiles WHERE user_id = ?");

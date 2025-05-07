@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once __DIR__ . '/../config/connect.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/NurseProfileModel.php';
@@ -592,107 +591,6 @@ switch ($action) {
                 $_SESSION['nurse_profile'] = $nurseProfile;
                 include __DIR__ . '/../views/update_nurse.php';
             }
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    // Placeholder cho các action mới
-    case 'bookings':
-        if (isLoggedIn() && getUserRole() === 'FAMILY') {
-            // TODO: Xử lý danh sách lịch đặt
-            include __DIR__ . '/../views/bookings.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'nursepage':
-        if (isLoggedIn() && getUserRole() === 'FAMILY') {
-            // TODO: Xử lý đặt dịch vụ
-            include __DIR__ . '/../views/nursepage.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'messages':
-        if (isLoggedIn() && in_array(getUserRole(), ['FAMILY', 'NURSE'])) {
-            // TODO: Xử lý trò chuyện
-            include __DIR__ . '/../views/messages.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'notifications':
-        if (isLoggedIn() && in_array(getUserRole(), ['FAMILY', 'NURSE'])) {
-            // TODO: Xử lý thông báo
-            include __DIR__ . '/../views/notifications.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'nurse_schedule':
-        if (isLoggedIn() && getUserRole() === 'NURSE') {
-            // TODO: Xử lý lịch làm việc
-            include __DIR__ . '/../views/nurse_schedule.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'pending_bookings':
-        if (isLoggedIn() && getUserRole() === 'NURSE') {
-            // TODO: Xử lý lịch đặt chờ xác nhận
-            include __DIR__ . '/../views/pending_bookings.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'nurse_availability':
-        if (isLoggedIn() && getUserRole() === 'NURSE') {
-            // TODO: Xử lý quản lý lịch làm việc
-            include __DIR__ . '/../views/nurse_availability.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'nurse_income':
-        if (isLoggedIn() && getUserRole() === 'NURSE') {
-            // TODO: Xử lý thống kê thu nhập
-            include __DIR__ . '/../views/nurse_income.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'review_nurse_profile':
-        if (isLoggedIn() && getUserRole() === 'ADMIN') {
-            // TODO: Xử lý duyệt hồ sơ y tá
-            include __DIR__ . '/../views/review_nurse_profile.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
-
-    case 'web_income':
-        if (isLoggedIn() && getUserRole() === 'ADMIN') {
-            // TODO: Xử lý thống kê doanh thu
-            include __DIR__ . '/../views/web_income.php';
         } else {
             $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
             header('Location: ?action=login');
