@@ -144,5 +144,25 @@ class UserModel {
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();
     }
+
+    // Trong class UserModel
+public function updateUser($userId, $userData, $familyData = null) {
+    // Cập nhật thông tin người dùng
+    $stmt = $this->conn->prepare(
+        "UPDATE users SET full_name = ?, email = ?, phone_number = ?, address = ? WHERE user_id = ?"
+    );
+    $stmt->bind_param("ssssi", $userData['full_name'], $userData['email'], $userData['phone_number'], $userData['address'], $userId);
+    if (!$stmt->execute()) {
+        throw new Exception("Lỗi khi cập nhật thông tin người dùng: " . $stmt->error);
+    }
+
+    // Nếu role là FAMILY, cập nhật thông tin gia đình
+    $user = $this->getUserById($userId);
+    if ($user['role'] === 'FAMILY' && $familyData) {
+        $this->familyProfileModel->updateFamilyProfile($userId, $familyData);
+    }
+
+    return $this->getUserById($userId);
+}
 }
 ?>
