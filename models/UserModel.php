@@ -37,6 +37,15 @@ class UserModel {
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
+    // Đếm số người dùng theo role
+    public function countUsersByRole($role) {
+        $stmt = $this->conn->prepare("SELECT COUNT(*) as count FROM users WHERE role = ?");
+        $stmt->bind_param("s", $role);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        return $result['count'] ?? 0;
+    }
+
     // Đăng ký người dùng mới
     public function registerUser($userData, $profileData = null) {
         // Kiểm tra trùng username
@@ -145,24 +154,24 @@ class UserModel {
         return $stmt->get_result()->fetch_assoc();
     }
 
-    // Trong class UserModel
-public function updateUser($userId, $userData, $familyData = null) {
     // Cập nhật thông tin người dùng
-    $stmt = $this->conn->prepare(
-        "UPDATE users SET full_name = ?, email = ?, phone_number = ?, address = ? WHERE user_id = ?"
-    );
-    $stmt->bind_param("ssssi", $userData['full_name'], $userData['email'], $userData['phone_number'], $userData['address'], $userId);
-    if (!$stmt->execute()) {
-        throw new Exception("Lỗi khi cập nhật thông tin người dùng: " . $stmt->error);
-    }
+    public function updateUser($userId, $userData, $familyData = null) {
+        // Cập nhật thông tin người dùng
+        $stmt = $this->conn->prepare(
+            "UPDATE users SET full_name = ?, email = ?, phone_number = ?, address = ? WHERE user_id = ?"
+        );
+        $stmt->bind_param("ssssi", $userData['full_name'], $userData['email'], $userData['phone_number'], $userData['address'], $userId);
+        if (!$stmt->execute()) {
+            throw new Exception("Lỗi khi cập nhật thông tin người dùng: " . $stmt->error);
+        }
 
-    // Nếu role là FAMILY, cập nhật thông tin gia đình
-    $user = $this->getUserById($userId);
-    if ($user['role'] === 'FAMILY' && $familyData) {
-        $this->familyProfileModel->updateFamilyProfile($userId, $familyData);
-    }
+        // Nếu role là FAMILY, cập nhật thông tin gia đình
+        $user = $this->getUserById($userId);
+        if ($user['role'] === 'FAMILY' && $familyData) {
+            $this->familyProfileModel->updateFamilyProfile($userId, $familyData);
+        }
 
-    return $this->getUserById($userId);
-}
+        return $this->getUserById($userId);
+    }
 }
 ?>

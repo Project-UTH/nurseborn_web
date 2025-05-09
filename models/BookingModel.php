@@ -411,5 +411,329 @@ class BookingModel {
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
+
+    // Lấy thống kê thu nhập ngày hiện tại
+    public function getTodayIncomeStats() {
+        $today = date('Y-m-d');
+        $stmt = $this->conn->prepare(
+            "SELECT COUNT(*) as booking_count, SUM(price) as total_price
+             FROM bookings 
+             WHERE DATE(created_at) = ? AND status = 'COMPLETED'"
+        );
+        $stmt->bind_param("s", $today);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+
+        $bookingCount = $result['booking_count'] ?? 0;
+        $totalPrice = $result['total_price'] ?? 0;
+
+        // Giả định chiết khấu web là 10%
+        $webIncome = $totalPrice * 0.1; // Thu nhập web
+        $nurseIncome = $totalPrice; // Thu nhập y tá thuần
+        $nurseAfterDiscount = $totalPrice * 0.9; // Thu nhập y tá sau chiết khấu
+
+        return [
+            'today_booking_count' => $bookingCount,
+            'today_web_income' => $webIncome,
+            'today_nurse_income' => $nurseIncome,
+            'today_nurse_after_discount' => $nurseAfterDiscount
+        ];
+    }
+
+    // Lấy thống kê thu nhập theo bộ lọc (tuần, tháng, năm)
+    public function getIncomeStats($filterType = null, $filterValue = null) {
+        $query = "SELECT COUNT(*) as booking_count, SUM(price) as total_price";
+        $conditions = ["status = 'COMPLETED'"];
+        $params = [];
+        $types = "";
+
+        if ($filterType && $filterValue) {
+            if ($filterType === 'weekly') {
+                // $filterValue có dạng "YYYY-WW" (ví dụ: "2023-W45")
+                list($year, $week) = explode('-W', $filterValue);
+                $conditions[] = "YEAR(booking_date) = ? AND WEEK(booking_date, 1) = ?";
+                $params[] = $year;
+                $params[] = $week;
+                $types .= "ii";
+            } elseif ($filterType === 'monthly') {
+                // $filterValue có dạng "YYYY-MM" (ví dụ: "2023-10")
+                list($year, $month) = explode('-', $filterValue);
+                $conditions[] = "YEAR(booking_date) = ? AND MONTH(booking_date) = ?";
+                $params[] = $year;
+                $params[] = $month;
+                $types .= "ii";
+            } elseif ($filterType === 'yearly') {
+                // $filterValue có dạng "YYYY" (ví dụ: "2023")
+                $conditions[] = "YEAR(booking_date) = ?";
+                $params[] = $filterValue;
+                $types .= "i";
+            }
+        }
+
+        $query .= " FROM bookings";
+        if (!empty($conditions)) {
+            $query .= " WHERE " . implode(" AND ", $conditions);
+        }
+
+        $stmt = $this->conn->prepare($query);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+
+        $bookingCount = $result['booking_count'] ?? 0;
+        $totalPrice = $result['total_price'] ?? 0;
+
+        // Giả định chiết khấu web là 10%
+        $webIncome = $totalPrice * 0.1;
+        $nurseIncome = $totalPrice;
+        $nurseAfterDiscount = $totalPrice * 0.9;
+
+        return [
+            'booking_count' => $bookingCount,
+            'web_income' => $webIncome,
+            'nurse_income' => $nurseIncome,
+            'nurse_after_discount' => $nurseAfterDiscount
+        ];
+    }
+
+    // Lấy dữ liệu biểu đồ thu nhập
+    public function getChartData($filterType = null, $filterValue = null) {
+        $labels = [];
+        $data = [];
+        $conditions = ["status = 'COMPLETED'"];
+        $params = [];
+        $types = "";
+
+        if ($filterType && $filterValue) {
+            if ($filterType === 'weekly') {
+                // Hiển thị thu nhập theo ngày trong tuần được chọn
+                list($year, $week) = explode('-W', $filterValue);
+                $conditions[] = "YEAR(booking_date) = ? AND WEEK(booking_date, 1) = ?";
+                $params[] = $year;
+                $params[] = $week;
+                $types .= "ii";
+
+                // Tạo nhãn cho 7 ngày trong tuần
+                $startDate = new DateTime();
+                $startDate->setISODate($year, $week);
+                for ($i = 0; $i < 7; $i++) {
+                    $labels[] = $startDate->format('Y-m-d');
+                    $startDate->modify('+1 day');
+                }
+            } elseif ($filterType === 'monthly') {
+                // Hiển thị thu nhập theo ngày trong tháng được chọn
+                list($year, $month) = explode('-', $filterValue);
+                $conditions[] = "YEAR(booking_date) = ? AND MONTH(booking_date) = ?";
+                $params[] = $year;
+                $params[] = $month;
+                $types .= "ii";
+
+                // Tạo nhãn cho các ngày trong tháng
+                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $labels[] = sprintf("%d-%02d-%02d", $year, $month, $day);
+                }
+            } elseif ($filterType === 'yearly') {
+                // Hiển thị thu nhập theo tháng trong năm được chọn
+                $conditions[] = "YEAR(booking_date) = ?";
+                $params[] = $filterValue;
+                $types .= "i";
+
+                // Tạo nhãn cho 12 tháng
+                for ($month = 1; $month <= 12; $month++) {
+                    $labels[] = sprintf("%d-%02d", $filterValue, $month);
+                }
+            }
+        } else {
+            // Mặc định: hiển thị thu nhập 30 ngày gần nhất
+            $endDate = new DateTime();
+            $startDate = (clone $endDate)->modify('-29 days');
+            for ($date = clone $startDate; $date <= $endDate; $date->modify('+1 day')) {
+                $labels[] = $date->format('Y-m-d');
+            }
+        }
+
+        // Lấy dữ liệu thu nhập
+        $query = "SELECT DATE(booking_date) as date, SUM(price) as total_price 
+                  FROM bookings 
+                  WHERE " . implode(" AND ", $conditions) . " 
+                  GROUP BY DATE(booking_date)";
+        $stmt = $this->conn->prepare($query);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        // Tạo mảng dữ liệu cho biểu đồ
+        $incomeData = array_fill(0, count($labels), 0);
+        foreach ($result as $row) {
+            $dateKey = $filterType === 'yearly' ? substr($row['date'], 0, 7) : $row['date'];
+            $index = array_search($dateKey, $labels);
+            if ($index !== false) {
+                $incomeData[$index] = (float)$row['total_price'];
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $incomeData
+        ];
+    }
+
+    // Lấy thống kê thu nhập của y tá theo bộ lọc (DAY, WEEK, MONTH)
+    public function getNurseIncomeStats($nurseUserId, $period = 'DAY', $specificDate = null) {
+        $query = "SELECT COUNT(*) as booking_count, SUM(price) as total_price";
+        $conditions = ["nurse_user_id = ?", "status = 'COMPLETED'"];
+        $params = [$nurseUserId];
+        $types = "i";
+
+        if ($period && $specificDate) {
+            if ($period === 'DAY') {
+                // $specificDate có dạng "YYYY-MM-DD"
+                $conditions[] = "DATE(booking_date) = ?";
+                $params[] = $specificDate;
+                $types .= "s";
+            } elseif ($period === 'WEEK') {
+                // $specificDate có dạng "YYYY-WW"
+                list($year, $week) = explode('-W', $specificDate);
+                $conditions[] = "YEAR(booking_date) = ? AND WEEK(booking_date, 1) = ?";
+                $params[] = $year;
+                $params[] = $week;
+                $types .= "ii";
+            } elseif ($period === 'MONTH') {
+                // $specificDate có dạng "YYYY-MM"
+                list($year, $month) = explode('-', $specificDate);
+                $conditions[] = "YEAR(booking_date) = ? AND MONTH(booking_date) = ?";
+                $params[] = $year;
+                $params[] = $month;
+                $types .= "ii";
+            }
+        } else {
+            // Mặc định: lấy thu nhập ngày hiện tại
+            $today = date('Y-m-d');
+            $conditions[] = "DATE(booking_date) = ?";
+            $params[] = $today;
+            $types .= "s";
+        }
+
+        $query .= " FROM bookings";
+        if (!empty($conditions)) {
+            $query .= " WHERE " . implode(" AND ", $conditions);
+        }
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+
+        $bookingCount = $result['booking_count'] ?? 0;
+        $totalPrice = $result['total_price'] ?? 0;
+
+        // Giả định chiết khấu nền tảng là 10%
+        $platformFee = $totalPrice * 0.1;
+        $netIncome = $totalPrice;
+        $netIncomeAfterFee = $totalPrice * 0.9;
+
+        return [
+            'booking_count' => $bookingCount,
+            'platform_fee' => $platformFee,
+            'total_income' => $netIncome,
+            'net_income_after_fee' => $netIncomeAfterFee
+        ];
+    }
+
+    // Lấy dữ liệu biểu đồ thu nhập của y tá
+    public function getNurseChartData($nurseUserId, $period = 'DAY', $specificDate = null) {
+        $labels = [];
+        $data = [];
+        $conditions = ["nurse_user_id = ?", "status = 'COMPLETED'"];
+        $params = [$nurseUserId];
+        $types = "i";
+
+        if ($period && $specificDate) {
+            if ($period === 'DAY') {
+                // Hiển thị thu nhập theo giờ trong ngày được chọn
+                $conditions[] = "DATE(booking_date) = ?";
+                $params[] = $specificDate;
+                $types .= "s";
+
+                // Tạo nhãn cho 24 giờ trong ngày
+                for ($hour = 0; $hour < 24; $hour++) {
+                    $labels[] = sprintf("%02d:00", $hour);
+                }
+            } elseif ($period === 'WEEK') {
+                // Hiển thị thu nhập theo ngày trong tuần được chọn
+                list($year, $week) = explode('-W', $specificDate);
+                $conditions[] = "YEAR(booking_date) = ? AND WEEK(booking_date, 1) = ?";
+                $params[] = $year;
+                $params[] = $week;
+                $types .= "ii";
+
+                // Tạo nhãn cho 7 ngày trong tuần
+                $startDate = new DateTime();
+                $startDate->setISODate($year, $week);
+                for ($i = 0; $i < 7; $i++) {
+                    $labels[] = $startDate->format('Y-m-d');
+                    $startDate->modify('+1 day');
+                }
+            } elseif ($period === 'MONTH') {
+                // Hiển thị thu nhập theo ngày trong tháng được chọn
+                list($year, $month) = explode('-', $specificDate);
+                $conditions[] = "YEAR(booking_date) = ? AND MONTH(booking_date) = ?";
+                $params[] = $year;
+                $params[] = $month;
+                $types .= "ii";
+
+                // Tạo nhãn cho các ngày trong tháng
+                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $labels[] = sprintf("%d-%02d-%02d", $year, $month, $day);
+                }
+            }
+        } else {
+            // Mặc định: hiển thị thu nhập theo giờ trong ngày hiện tại
+            $today = date('Y-m-d');
+            $conditions[] = "DATE(booking_date) = ?";
+            $params[] = $today;
+            $types .= "s";
+
+            for ($hour = 0; $hour < 24; $hour++) {
+                $labels[] = sprintf("%02d:00", $hour);
+            }
+        }
+
+        // Lấy dữ liệu thu nhập
+        $query = "SELECT DATE(booking_date) as date, HOUR(start_time) as hour, SUM(price) as total_price 
+                  FROM bookings 
+                  WHERE " . implode(" AND ", $conditions) . " 
+                  GROUP BY DATE(booking_date), HOUR(start_time)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        // Tạo mảng dữ liệu cho biểu đồ
+        $incomeData = array_fill(0, count($labels), 0);
+        foreach ($result as $row) {
+            if ($period === 'DAY') {
+                $hourKey = sprintf("%02d:00", $row['hour']);
+                $index = array_search($hourKey, $labels);
+            } else {
+                $dateKey = $row['date'];
+                $index = array_search($dateKey, $labels);
+            }
+            if ($index !== false) {
+                $incomeData[$index] = (float)$row['total_price'];
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $incomeData
+        ];
+    }
 }
 ?>

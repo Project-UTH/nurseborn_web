@@ -4,12 +4,14 @@ require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/NurseProfileModel.php';
 require_once __DIR__ . '/../models/FamilyProfileModel.php';
 require_once __DIR__ . '/../models/CertificateModel.php';
+require_once __DIR__ . '/../models/BookingModel.php';
 
 // Khởi tạo models
 $userModel = new UserModel($conn);
 $nurseProfileModel = new NurseProfileModel($conn);
 $familyProfileModel = new FamilyProfileModel($conn);
 $certificateModel = new CertificateModel($conn);
+$bookingModel = new BookingModel($conn);
 
 // Hàm kiểm tra đăng nhập
 function isLoggedIn() {
@@ -79,6 +81,109 @@ switch ($action) {
             }
             $_SESSION['user'] = $user;
             include __DIR__ . '/../views/admin_dashboard.php';
+        } else {
+            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
+            header('Location: ?action=login');
+        }
+        break;
+
+    case 'web_income':
+        if (isLoggedIn() && getUserRole() === 'ADMIN') {
+            $user = $userModel->getUserById($_SESSION['user_id']);
+            if (!$user) {
+                error_log("User not found for ID: {$_SESSION['user_id']}");
+                $_SESSION['error'] = 'Người dùng không tồn tại';
+                session_destroy();
+                header('Location: ?action=login');
+                exit;
+            }
+
+            // Đếm số gia đình và y tá
+            $familyCount = $userModel->countUsersByRole('FAMILY');
+            $nurseCount = $userModel->countUsersByRole('NURSE');
+
+            // Lấy thống kê thu nhập ngày hiện tại
+            $todayStats = $bookingModel->getTodayIncomeStats();
+
+            // Lấy bộ lọc từ query string
+            $filterType = isset($_GET['filterType']) ? $_GET['filterType'] : null;
+            $filterValue = isset($_GET['filterValue']) ? $_GET['filterValue'] : null;
+
+            // Lấy thống kê thu nhập theo bộ lọc
+            $incomeStats = $bookingModel->getIncomeStats($filterType, $filterValue);
+
+            // Lấy dữ liệu biểu đồ
+            $chartData = $bookingModel->getChartData($filterType, $filterValue);
+
+            // Chuẩn bị dữ liệu cho view
+            $webIncomeData = [
+                'familyCount' => $familyCount,
+                'nurseCount' => $nurseCount,
+                'todayBookingCount' => $todayStats['today_booking_count'],
+                'todayWebIncome' => $todayStats['today_web_income'],
+                'todayNurseIncome' => $todayStats['today_nurse_income'],
+                'todayNurseAfterDiscount' => $todayStats['today_nurse_after_discount'],
+                'bookingCount' => $incomeStats['booking_count'],
+                'webIncome' => $incomeStats['web_income'],
+                'nurseIncome' => $incomeStats['nurse_income'],
+                'nurseAfterDiscount' => $incomeStats['nurse_after_discount'],
+                'filterType' => $filterType,
+                'filterValue' => $filterValue,
+                'chartLabels' => json_encode($chartData['labels']),
+                'chartData' => json_encode($chartData['data'])
+            ];
+
+            $_SESSION['user'] = $user;
+            include __DIR__ . '/../views/web_income.php';
+        } else {
+            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
+            header('Location: ?action=login');
+        }
+        break;
+
+    case 'nurse_income':
+        if (isLoggedIn() && getUserRole() === 'NURSE') {
+            $user = $userModel->getUserById($_SESSION['user_id']);
+            if (!$user) {
+                error_log("User not found for ID: {$_SESSION['user_id']}");
+                $_SESSION['error'] = 'Người dùng không tồn tại';
+                session_destroy();
+                header('Location: ?action=login');
+                exit;
+            }
+
+            $nurseProfile = $nurseProfileModel->getNurseProfileByUserId($user['user_id']);
+            if (!$nurseProfile) {
+                $_SESSION['error'] = 'Hồ sơ y tá chưa được tạo. Vui lòng cập nhật hồ sơ.';
+                header('Location: ?action=register_nurse');
+                exit;
+            }
+
+            // Lấy bộ lọc từ query string
+            $period = isset($_GET['period']) ? strtoupper($_GET['period']) : 'DAY';
+            $specificDate = isset($_GET['specificDate']) ? $_GET['specificDate'] : null;
+
+            // Lấy thống kê thu nhập của y tá
+            $incomeStats = $bookingModel->getNurseIncomeStats($user['user_id'], $period, $specificDate);
+
+            // Lấy dữ liệu biểu đồ
+            $chartData = $bookingModel->getNurseChartData($user['user_id'], $period, $specificDate);
+
+            // Chuẩn bị dữ liệu cho view
+            $nurseIncomeData = [
+                'bookingCount' => $incomeStats['booking_count'],
+                'platformFee' => $incomeStats['platform_fee'],
+                'totalIncome' => $incomeStats['total_income'],
+                'netIncomeAfterFee' => $incomeStats['net_income_after_fee'],
+                'period' => $period,
+                'specificDate' => $specificDate,
+                'chartLabels' => json_encode($chartData['labels']),
+                'chartData' => json_encode($chartData['data'])
+            ];
+
+            $_SESSION['user'] = $user;
+            $_SESSION['nurse_profile'] = $nurseProfile;
+            include __DIR__ . '/../views/nurse_income.php';
         } else {
             $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
             header('Location: ?action=login');
