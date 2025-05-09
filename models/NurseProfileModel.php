@@ -2,7 +2,7 @@
 require_once 'CertificateModel.php';
 
 class NurseProfileModel {
-    private $conn;
+    private $conn;  
     private $certificateModel;
 
     public function __construct($dbConnection) {
@@ -103,29 +103,6 @@ class NurseProfileModel {
         return $profile;
     }
 
-        // Lấy danh sách hồ sơ y tá được phê duyệt theo danh sách user_id
-        public function getApprovedNurseProfilesByUserIds($userIds) {
-            if (empty($userIds)) {
-                return [];
-            }
-            $placeholders = implode(',', array_fill(0, count($userIds), '?'));
-            $stmt = $this->conn->prepare(
-                "SELECT np.*, u.full_name, u.is_verified 
-                 FROM nurse_profiles np 
-                 JOIN users u ON np.user_id = u.user_id 
-                 WHERE np.user_id IN ($placeholders) AND np.is_approved = 1"
-            );
-            $stmt->bind_param(str_repeat('i', count($userIds)), ...$userIds);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $profiles = [];
-            while ($row = $result->fetch_assoc()) {
-                $row['certificates'] = $this->certificateModel->getCertificatesByNurseProfileId($row['nurse_profile_id']);
-                $profiles[] = $row;
-            }
-            return $profiles;
-        }
-
     // Xóa hồ sơ y tá
     public function deleteNurseProfile($userId) {
         $stmt = $this->conn->prepare("SELECT nurse_profile_id FROM nurse_profiles WHERE user_id = ?");
@@ -203,6 +180,53 @@ class NurseProfileModel {
         $stmt->execute();
         $profiles = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
+        foreach ($profiles as &$profile) {
+            $profile['certificates'] = $this->certificateModel->getCertificatesByNurseProfileId($profile['nurse_profile_id']);
+        }
+
+        return $profiles;
+    }
+
+    // Lấy tất cả hồ sơ y tá đã được phê duyệt
+    public function getApprovedNurseProfiles() {
+        $stmt = $this->conn->prepare(
+            "SELECT np.*, u.full_name, u.is_verified, u.username, u.email, u.phone_number, u.address, u.role 
+             FROM nurse_profiles np 
+             JOIN users u ON np.user_id = u.user_id 
+             WHERE np.is_approved = 1"
+        );
+        $stmt->execute();
+        $profiles = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        foreach ($profiles as &$profile) {
+            $profile['certificates'] = $this->certificateModel->getCertificatesByNurseProfileId($profile['nurse_profile_id']);
+        }
+
+        return $profiles;
+    }
+
+    // Lấy danh sách hồ sơ y tá đã được phê duyệt theo user_ids
+    public function getApprovedNurseProfilesByUserIds($userIds) {
+        if (empty($userIds)) {
+            return [];
+        }
+
+        // Chuyển danh sách user_ids thành chuỗi cho câu truy vấn
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $stmt = $this->conn->prepare(
+            "SELECT np.*, u.full_name, u.is_verified, u.username, u.email, u.phone_number, u.address, u.role 
+             FROM nurse_profiles np 
+             JOIN users u ON np.user_id = u.user_id 
+             WHERE np.is_approved = 1 AND np.user_id IN ($placeholders)"
+        );
+
+        // Ràng buộc tham số động
+        $types = str_repeat('i', count($userIds));
+        $stmt->bind_param($types, ...$userIds);
+        $stmt->execute();
+        $profiles = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        // Lấy chứng chỉ cho từng hồ sơ
         foreach ($profiles as &$profile) {
             $profile['certificates'] = $this->certificateModel->getCertificatesByNurseProfileId($profile['nurse_profile_id']);
         }

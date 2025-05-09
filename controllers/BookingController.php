@@ -1,15 +1,22 @@
 <?php
+// Hiển thị lỗi trực tiếp để debug
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../config/connect.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/NurseProfileModel.php';
 require_once __DIR__ . '/../models/NurseAvailabilityModel.php';
 require_once __DIR__ . '/../models/BookingModel.php';
+require_once __DIR__ . '/../models/FeedbackModel.php';
 
 // Khởi tạo models
 $userModel = new UserModel($conn);
 $nurseProfileModel = new NurseProfileModel($conn);
 $nurseAvailabilityModel = new NurseAvailabilityModel($conn);
 $bookingModel = new BookingModel($conn);
+$feedbackModel = new FeedbackModel($conn);
 
 // Hàm kiểm tra đăng nhập
 function isLoggedIn() {
@@ -66,6 +73,9 @@ switch ($action) {
             $nurseUserIds = array_column($nurseUsers, 'user_id');
             $nurseProfiles = $nurseProfileModel->getApprovedNurseProfilesByUserIds($nurseUserIds);
 
+            // Gán mảng $nurses để sử dụng trong nursepage.php
+            $nurses = $nurseProfiles;
+
             $_SESSION['user'] = $user;
             include __DIR__ . '/../views/nursepage.php';
         } catch (Exception $e) {
@@ -95,7 +105,9 @@ switch ($action) {
                 ];
                 $bookingModel->createBooking($bookingData, $user['user_id']);
                 $_SESSION['success'] = 'Đặt lịch thành công!';
-                header("Location: ?action=set_service&nurseUserId=$bookingData[nurse_user_id]");
+                error_log("Đã lưu lịch đặt thành công cho family_user_id: " . $user['user_id']);
+                // Chuyển hướng đến trang danh sách lịch đặt
+                header("Location: ?action=bookings");
                 exit;
             }
 
@@ -136,6 +148,239 @@ switch ($action) {
             } else {
                 include __DIR__ . '/../views/error.php';
             }
+        }
+        break;
+
+    case 'bookings':
+        error_log("Bắt đầu xử lý hành động bookings");
+        try {
+            $user = authenticateFamily();
+            error_log("Debug: user_id hiện tại: " . $user['user_id']);
+            
+            // Kiểm tra kết nối cơ sở dữ liệu
+            if (!$conn) {
+                error_log("Lỗi: Kết nối cơ sở dữ liệu thất bại");
+                die("Lỗi: Kết nối cơ sở dữ liệu thất bại");
+            }
+            error_log("Kết nối cơ sở dữ liệu thành công");
+
+            $stmt = $conn->prepare(
+                "SELECT b.*, u.full_name AS nurse_full_name 
+                 FROM bookings b 
+                 LEFT JOIN users u ON b.nurse_user_id = u.user_id 
+                 WHERE b.family_user_id = ?"
+            );
+            if (!$stmt) {
+                error_log("Lỗi khi chuẩn bị truy vấn: " . $conn->error);
+                die("Lỗi khi chuẩn bị truy vấn: " . $conn->error);
+            }
+            $stmt->bind_param("i", $user['user_id']);
+            error_log("Truy vấn SQL được chuẩn bị thành công");
+
+            $stmt->execute();
+            error_log("Truy vấn SQL được thực thi thành công");
+
+            $result = $stmt->get_result();
+            $bookings = $result->fetch_all(MYSQLI_ASSOC);
+            error_log("Debug: Số lượng lịch đặt tìm thấy: " . count($bookings));
+            error_log("Debug: Dữ liệu bookings: " . print_r($bookings, true));
+
+            $_SESSION['user'] = $user;
+            
+            // Kiểm tra xem file bookings.php có tồn tại không
+            $bookingFilePath = __DIR__ . '/../views/bookings.php';
+            if (!file_exists($bookingFilePath)) {
+                error_log("Lỗi: File bookings.php không tồn tại tại: $bookingFilePath");
+                die("Lỗi: File bookings.php không tồn tại tại: $bookingFilePath");
+            }
+            error_log("File bookings.php tồn tại, đang bao gồm file");
+            
+            include $bookingFilePath;
+            error_log("Đã bao gồm file bookings.php thành công");
+        } catch (Exception $e) {
+            error_log("Lỗi khi hiển thị danh sách lịch đặt: " . $e->getMessage());
+            $_SESSION['error'] = "Lỗi khi tải danh sách lịch đặt: " . $e->getMessage();
+            include __DIR__ . '/../views/error.php';
+        }
+        break;
+
+    case 'cancel_booking':
+        try {
+            $user = authenticateFamily();
+            $bookingId = filter_input(INPUT_GET, 'booking_id', FILTER_SANITIZE_NUMBER_INT);
+            if (empty($bookingId)) {
+                throw new Exception("ID lịch đặt không hợp lệ");
+            }
+            $bookingModel->cancelBookingByFamily($bookingId, $user['user_id']);
+            $_SESSION['success'] = 'Hủy lịch đặt thành công!';
+            header('Location: ?action=bookings');
+            exit;
+        } catch (Exception $e) {
+            error_log("Lỗi khi hủy lịch đặt: " . $e->getMessage());
+            $_SESSION['error'] = "Lỗi khi hủy lịch đặt: " . $e->getMessage();
+            header('Location: ?action=bookings');
+            exit;
+        }
+        break;
+
+    case 'feedback':
+        error_log("Bắt đầu xử lý hành động feedback");
+        try {
+            // Kiểm tra kết nối cơ sở dữ liệu trước
+            if (!$conn) {
+                error_log("Lỗi: Kết nối cơ sở dữ liệu thất bại");
+                throw new Exception("Kết nối cơ sở dữ liệu thất bại");
+            }
+            error_log("Kết nối cơ sở dữ liệu thành công");
+
+            $user = authenticateFamily();
+            error_log("Debug: User hiện tại: " . print_r($user, true));
+
+            $bookingId = filter_input(INPUT_GET, 'booking_id', FILTER_SANITIZE_NUMBER_INT);
+            error_log("Debug: Booking ID: " . $bookingId);
+            if (empty($bookingId)) {
+                throw new Exception("ID lịch đặt không hợp lệ");
+            }
+
+            $booking = $bookingModel->getBookingById($bookingId);
+            error_log("Debug: Dữ liệu booking: " . print_r($booking, true));
+            if (!$booking) {
+                throw new Exception("Không tìm thấy lịch đặt với ID: $bookingId");
+            }
+
+            if ($booking['family_user_id'] !== $user['user_id']) {
+                throw new Exception("Bạn không có quyền đánh giá lịch đặt này.");
+            }
+
+            if ($booking['status'] !== 'COMPLETED') {
+                throw new Exception("Chỉ có thể đánh giá các lịch đặt đã hoàn thành.");
+            }
+
+            if ($booking['has_feedback']) {
+                $_SESSION['error'] = "Bạn đã đánh giá lịch đặt này rồi.";
+                header('Location: ?action=bookings');
+                exit;
+            }
+
+            $_SESSION['user'] = $user;
+
+            // Kiểm tra xem file feedback.php có tồn tại không
+            $feedbackFilePath = __DIR__ . '/../views/feedback.php';
+            if (!file_exists($feedbackFilePath)) {
+                error_log("Lỗi: File feedback.php không tồn tại tại: $feedbackFilePath");
+                die("Lỗi: File feedback.php không tồn tại tại: $feedbackFilePath");
+            }
+            error_log("File feedback.php tồn tại, đang bao gồm file");
+
+            include $feedbackFilePath;
+            error_log("Đã bao gồm file feedback.php thành công");
+        } catch (Exception $e) {
+            error_log("Lỗi khi hiển thị form đánh giá: " . $e->getMessage());
+            $_SESSION['error'] = "Lỗi khi tải form đánh giá: " . $e->getMessage();
+            header('Location: ?action=bookings');
+            exit;
+        }
+        break;
+
+    case 'submit_feedback':
+        try {
+            $user = authenticateFamily();
+            $bookingId = filter_input(INPUT_POST, 'booking_id', FILTER_SANITIZE_NUMBER_INT);
+            $nurseId = filter_input(INPUT_POST, 'nurse_id', FILTER_SANITIZE_NUMBER_INT);
+            $rating = filter_input(INPUT_POST, 'rating', FILTER_SANITIZE_NUMBER_INT);
+            $comment = filter_input(INPUT_POST, 'comment', FILTER_SANITIZE_STRING);
+
+            if (empty($bookingId) || empty($nurseId) || empty($rating)) {
+                throw new Exception("Thông tin đánh giá không đầy đủ.");
+            }
+
+            $booking = $bookingModel->getBookingById($bookingId);
+            if (!$booking) {
+                throw new Exception("Không tìm thấy lịch đặt với ID: $bookingId");
+            }
+
+            if ($booking['family_user_id'] !== $user['user_id']) {
+                throw new Exception("Bạn không có quyền gửi đánh giá cho lịch đặt này.");
+            }
+
+            // Xử lý tệp đính kèm
+            $attachmentPath = null;
+            if (!empty($_FILES['attachment']['name'][0])) {
+                $uploadDir = __DIR__ . '/../uploads/feedback/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                foreach ($_FILES['attachment']['tmp_name'] as $index => $tmpName) {
+                    if ($_FILES['attachment']['error'][$index] === UPLOAD_ERR_OK) {
+                        $fileName = time() . '_' . basename($_FILES['attachment']['name'][$index]);
+                        $filePath = $uploadDir . $fileName;
+                        if (move_uploaded_file($tmpName, $filePath)) {
+                            $attachmentPath = $filePath;
+                            break; // Chỉ lưu một tệp đính kèm
+                        }
+                    }
+                }
+            }
+
+            // Lưu đánh giá vào cơ sở dữ liệu
+            $feedbackData = [
+                'booking_id' => $bookingId,
+                'nurse_user_id' => $nurseId,
+                'family_user_id' => $user['user_id'],
+                'rating' => $rating,
+                'comment' => $comment,
+                'attachment' => $attachmentPath
+            ];
+            $feedbackModel->createFeedback($feedbackData);
+
+            // Cập nhật trạng thái has_feedback của booking
+            $stmt = $conn->prepare(
+                "UPDATE bookings SET has_feedback = 1 WHERE booking_id = ?"
+            );
+            $stmt->bind_param("i", $bookingId);
+            $stmt->execute();
+
+            $_SESSION['success'] = 'Gửi đánh giá thành công!';
+            header('Location: ?action=bookings');
+            exit;
+        } catch (Exception $e) {
+            error_log("Lỗi khi gửi đánh giá: " . $e->getMessage());
+            $_SESSION['error'] = "Lỗi khi gửi đánh giá: " . $e->getMessage();
+            header('Location: ?action=bookings');
+            exit;
+        }
+        break;
+
+    case 'nurse_review':
+        error_log("Bắt đầu xử lý hành động nurse_review");
+        try {
+            $user = authenticateFamily();
+            error_log("Debug: User hiện tại: " . print_r($user, true));
+
+            $nurseUserId = filter_input(INPUT_GET, 'nurseUserId', FILTER_SANITIZE_NUMBER_INT);
+            error_log("Debug: nurseUserId: " . $nurseUserId);
+            if (empty($nurseUserId)) {
+                throw new Exception("Thiếu thông tin y tá.");
+            }
+
+            $_SESSION['user'] = $user;
+
+            // Kiểm tra xem file nurse_review.php có tồn tại không
+            $nurseReviewFilePath = __DIR__ . '/../views/nurse_review.php';
+            if (!file_exists($nurseReviewFilePath)) {
+                error_log("Lỗi: File nurse_review.php không tồn tại tại: $nurseReviewFilePath");
+                die("Lỗi: File nurse_review.php không tồn tại tại: $nurseReviewFilePath");
+            }
+            error_log("File nurse_review.php tồn tại, đang bao gồm file");
+
+            include $nurseReviewFilePath;
+            error_log("Đã bao gồm file nurse_review.php thành công");
+        } catch (Exception $e) {
+            error_log("Lỗi khi hiển thị trang đánh giá y tá: " . $e->getMessage());
+            $_SESSION['error'] = "Lỗi khi hiển thị trang đánh giá: " . $e->getMessage();
+            header('Location: ?action=home');
+            exit;
         }
         break;
 

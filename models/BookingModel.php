@@ -766,5 +766,34 @@ class BookingModel {
 
         return $ranking;
     }
+
+    // Thêm phương thức getBookingById để lấy thông tin lịch đặt theo booking_id
+    public function getBookingById($bookingId) {
+        $stmt = $this->conn->prepare(
+            "SELECT b.*, u.full_name AS nurse_full_name 
+             FROM bookings b 
+             LEFT JOIN users u ON b.nurse_user_id = u.user_id 
+             WHERE b.booking_id = ?"
+        );
+
+        if (!$stmt) {
+            error_log("Prepare failed in getBookingById: " . $this->conn->error);
+            throw new Exception("Prepare failed: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("i", $bookingId);
+
+        if (!$stmt->execute()) {
+            error_log("Execute failed in getBookingById: " . $stmt->error);
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $booking = $result->fetch_assoc();
+
+        $stmt->close();
+
+        return $booking;
+    }
 }
 ?>

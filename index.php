@@ -20,7 +20,12 @@ $notificationActions = [
 // Danh sách các action thuộc BookingController
 $bookingActions = [
     'nurse_list',
-    'set_service'
+    'set_service',
+    'bookings',
+    'cancel_booking',
+    'feedback',
+    'submit_feedback',
+    'nurse_review' // Đã có sẵn
 ];
 
 // Danh sách các action thuộc NurseController
