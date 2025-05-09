@@ -735,5 +735,36 @@ class BookingModel {
             'data' => $incomeData
         ];
     }
+
+    // Lấy danh sách xếp hạng thu nhập của y tá (từ cao xuống thấp)
+    public function getNurseRanking() {
+        $query = "
+            SELECT 
+                b.nurse_user_id,
+                u.full_name,
+                u.email,
+                u.phone_number,
+                COUNT(b.booking_id) as booking_count,
+                SUM(b.price) as total_income
+            FROM bookings b
+            JOIN users u ON b.nurse_user_id = u.user_id
+            WHERE b.status = 'COMPLETED'
+            GROUP BY b.nurse_user_id, u.full_name, u.email, u.phone_number
+            ORDER BY total_income DESC
+        ";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        // Thêm thứ hạng (rank) cho từng y tá
+        $ranking = [];
+        foreach ($result as $index => $nurse) {
+            $nurse['rank'] = $index + 1;
+            $ranking[] = $nurse;
+        }
+
+        return $ranking;
+    }
 }
 ?>

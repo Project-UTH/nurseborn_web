@@ -141,6 +141,28 @@ switch ($action) {
         }
         break;
 
+    case 'nurse_ranking':
+        if (isLoggedIn() && getUserRole() === 'ADMIN') {
+            $user = $userModel->getUserById($_SESSION['user_id']);
+            if (!$user) {
+                error_log("User not found for ID: {$_SESSION['user_id']}");
+                $_SESSION['error'] = 'Người dùng không tồn tại';
+                session_destroy();
+                header('Location: ?action=login');
+                exit;
+            }
+
+            // Lấy danh sách xếp hạng y tá
+            $nurseRanking = $bookingModel->getNurseRanking();
+
+            $_SESSION['user'] = $user;
+            include __DIR__ . '/../views/nurse_ranking.php';
+        } else {
+            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
+            header('Location: ?action=login');
+        }
+        break;
+
     case 'nurse_income':
         if (isLoggedIn() && getUserRole() === 'NURSE') {
             $user = $userModel->getUserById($_SESSION['user_id']);
