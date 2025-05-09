@@ -87,6 +87,47 @@ switch ($action) {
         }
         break;
 
+    case 'review_nurse_profile':
+        if (isLoggedIn() && getUserRole() === 'ADMIN') {
+            $user = $userModel->getUserById($_SESSION['user_id']);
+            if (!$user) {
+                error_log("User not found for ID: {$_SESSION['user_id']}");
+                $_SESSION['error'] = 'Người dùng không tồn tại';
+                session_destroy();
+                header('Location: ?action=login');
+                exit;
+            }
+
+            // Xử lý hành động duyệt hoặc từ chối
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $nurseUserId = isset($_POST['nurse_user_id']) ? (int)$_POST['nurse_user_id'] : 0;
+                $actionType = isset($_POST['action_type']) ? $_POST['action_type'] : '';
+
+                if ($nurseUserId > 0 && in_array($actionType, ['approve', 'reject'])) {
+                    try {
+                        $isApproved = $actionType === 'approve' ? 1 : 0;
+                        $nurseProfileModel->updateApprovalStatus($nurseUserId, $isApproved, $user['user_id']);
+                        $_SESSION['success'] = $isApproved ? 'Đã phê duyệt hồ sơ y tá thành công!' : 'Đã từ chối hồ sơ y tá!';
+                    } catch (Exception $e) {
+                        error_log("Lỗi khi xử lý hồ sơ y tá: " . $e->getMessage());
+                        $_SESSION['error'] = 'Lỗi: ' . $e->getMessage();
+                    }
+                    header('Location: ?action=review_nurse_profile');
+                    exit;
+                }
+            }
+
+            // Lấy danh sách y tá chưa duyệt
+            $nurseProfiles = $nurseProfileModel->getAllNurseProfiles();
+
+            $_SESSION['user'] = $user;
+            include __DIR__ . '/../views/review_nurse_profile.php';
+        } else {
+            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
+            header('Location: ?action=login');
+        }
+        break;
+
     case 'web_income':
         if (isLoggedIn() && getUserRole() === 'ADMIN') {
             $user = $userModel->getUserById($_SESSION['user_id']);
