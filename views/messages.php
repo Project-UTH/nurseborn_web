@@ -1,59 +1,41 @@
 <?php
-// Đặt file này vào thư mục views/
+// Không gọi session_start() ở đây vì session đã được khởi động trong connect.php hoặc MessageController.php
+$baseUrl = '/nurseborn';
 
-// Đảm bảo $_SESSION có dữ liệu
+// Lấy thông tin người dùng từ session
 $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
 $nurseProfile = isset($_SESSION['nurse_profile']) ? $_SESSION['nurse_profile'] : null;
-$baseUrl = '/nurseborn'; // Đường dẫn cho tài nguyên tĩnh (CSS, JS, hình ảnh) và AJAX
 
-// Kiểm tra đăng nhập
-if (!$user) {
-    echo '<div class="container"><p class="error-message">Bạn cần đăng nhập để truy cập trang này. <a href="?action=login">Đăng nhập ngay</a>.</p></div>';
-    exit;
-}
+// Xử lý ảnh đại diện và thông tin người dùng
+$avatar = ($nurseProfile && !empty($nurseProfile['profile_image'])) ? htmlspecialchars($nurseProfile['profile_image']) : ($baseUrl . '/static/assets/img/avatars/default_profile.jpg');
+$fullName = $user ? htmlspecialchars($user['full_name']) : 'Người dùng';
+$role = $user ? htmlspecialchars($user['role']) : 'Khách';
 ?>
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tin nhắn - NurseBorn</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <meta name="description" content="" />
-    <meta name="_csrf" content="<?php echo isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : ''; ?>">
-    <meta name="_csrf_header" content="X-CSRF-TOKEN">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="<?php echo $baseUrl; ?>/static/assets/img/favicon/favicon.png" />
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-
-    <!-- Icons -->
-    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/fonts/boxicons.css" />
-
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <!-- Core CSS -->
-    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/core.css" />
-    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/theme-default.css" />
-    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/css/demo.css" />
-
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/core.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/theme-default.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/css/demo.css">
     <!-- Vendors CSS -->
-    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
-    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/libs/apex-charts/apex-charts.css" />
-
-    <!-- Helpers -->
-    <script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/helpers.js"></script>
-    <script src="<?php echo $baseUrl; ?>/static/assets/js/config.js"></script>
-
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/libs/apex-charts/apex-charts.css">
+    <!-- Custom CSS -->
     <style>
         /* Tùy chỉnh tổng thể */
         body {
             background: linear-gradient(to bottom, #f5f7fa, #e8ecef);
             font-family: 'Arial', sans-serif;
             min-height: 100vh;
-            margin: 0;
         }
         .container {
             max-width: 1200px;
@@ -240,7 +222,7 @@ if (!$user) {
         .message-input button:hover {
             background: linear-gradient(45deg, #3182ce, #2b6cb0);
             transform: scale(1.02);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
         }
 
         /* Thông báo lỗi và không có dữ liệu */
@@ -261,42 +243,34 @@ if (!$user) {
 <body>
 <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
-        <!-- Placeholder cho menu -->
+        <!-- Placeholder để JavaScript thêm menu -->
         <div id="menu-placeholder"></div>
 
         <div class="layout-page">
-            <!-- Placeholder cho navbar -->
+            <!-- Placeholder để JavaScript thêm navbar -->
             <div id="navbar-placeholder"></div>
 
             <div class="content-wrapper">
-                <div class="container">
+                <div class="content-xxl flex-grow-1 container-p-y">
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="card-title mb-0">Tin nhắn</h5>
                         </div>
                         <div class="card-body">
-                            <?php if (isset($user) && is_array($user) && $user['role'] === 'ADMIN'): ?>
-                                <p class="error-message">Admin không có quyền truy cập vào nhắn tin</p>
-                            <?php else: ?>
-                                <div class="chat-container">
-                                    <div class="sidebar">
-                                        <h5>Danh sách trò chuyện</h5>
-                                        <ul id="conversation-list">
-                                            <li class="no-data">Đang tải danh sách trò chuyện...</li>
-                                        </ul>
-                                    </div>
-                                    <div class="chat-area">
-                                        <h5 id="chat-with">Chọn một người để trò chuyện</h5>
-                                        <div class="messages" id="messages">
-                                            <p class="no-data">Chưa có tin nhắn</p>
-                                        </div>
-                                        <div class="message-input">
-                                            <input type="text" id="message-input" placeholder="Nhập tin nhắn...">
-                                            <button onclick="sendMessage()">Gửi</button>
-                                        </div>
+                            <div class="chat-container">
+                                <div class="sidebar">
+                                    <h5>Danh sách trò chuyện</h5>
+                                    <ul id="conversation-list"></ul>
+                                </div>
+                                <div class="chat-area">
+                                    <h5 id="chat-with">Chọn một người để trò chuyện</h5>
+                                    <div class="messages" id="messages"></div>
+                                    <div class="message-input">
+                                        <input type="text" id="message-input" placeholder="Nhập tin nhắn...">
+                                        <button onclick="sendMessage()">Gửi</button>
                                     </div>
                                 </div>
-                            <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -321,21 +295,19 @@ if (!$user) {
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 
 <script>
+    const baseUrl = '<?php echo $baseUrl; ?>';
     const currentUser = {
         userId: <?php echo json_encode($user['user_id'] ?? null); ?>,
         username: <?php echo json_encode($user['username'] ?? null); ?>,
         role: <?php echo json_encode($user['role'] ?? null); ?>,
         fullName: <?php echo json_encode($user['full_name'] ?? 'Người dùng'); ?>,
-        profileImage: <?php echo json_encode($nurseProfile['profile_image'] ?? $baseUrl . '/static/assets/img/avatars/default_profile.jpg'); ?>
+        profileImage: <?php echo json_encode($avatar); ?>
     };
-
-    let selectedUser = null;
+    let selectedPartnerId = null;
     let lastMessageId = 0;
     const displayedMessages = new Set();
 
-    const token = document.querySelector('meta[name="_csrf"]') ? document.querySelector('meta[name="_csrf"]').getAttribute('content') : '';
-    const header = document.querySelector('meta[name="_csrf_header"]') ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content') : '';
-
+    // Hàm để thêm menu dựa trên vai trò
     function loadMenuBasedOnRole() {
         const menuPlaceholder = document.getElementById('menu-placeholder');
 
@@ -343,9 +315,9 @@ if (!$user) {
             menuPlaceholder.innerHTML = `
                 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
                     <div class="app-brand demo">
-                        <a href="/" class="app-brand-link">
+                        <a href="?action=home" class="app-brand-link">
                             <span class="app-brand-logo demo">
-                                <img src="<?php echo $baseUrl; ?>/assets/img/favicon/favicon.png" alt="Logo" width="30" height="30">
+                                <img src="${baseUrl}/static/assets/img/favicon/favicon.png" alt="Logo" width="30" height="30">
                             </span>
                             <span class="app-brand-text demo text-body fw-bolder text-uppercase">NURSEBORN</span>
                         </a>
@@ -355,43 +327,43 @@ if (!$user) {
                     </div>
                     <div class="menu-inner-shadow"></div>
                     <ul class="menu-inner py-1">
-                        <li class="menu-item">
-                            <a href="/" class="menu-link">
+                        <li class="menu-item ${window.location.search.includes('action=home') ? 'active' : ''}">
+                            <a href="?action=home" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                                 <div data-i18n="Dashboard">Trang chủ</div>
                             </a>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=nurse_schedule') ? 'active' : ''}">
                             <a href="?action=nurse_schedule" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-calendar"></i>
                                 <div data-i18n="Schedule">Lịch Làm Việc</div>
                             </a>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=notifications') ? 'active' : ''}">
                             <a href="?action=notifications" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-bell"></i>
                                 <div data-i18n="notifications">Thông Báo</div>
                             </a>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=pending_bookings') ? 'active' : ''}">
                             <a href="?action=pending_bookings" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-time"></i>
                                 <div data-i18n="Pending Bookings">Lịch Đặt Chờ Xác Nhận</div>
                             </a>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=nurse_availability') ? 'active' : ''}">
                             <a href="?action=nurse_availability" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-check-square"></i>
                                 <div data-i18n="Availability">Quản Lý Lịch Làm Việc</div>
                             </a>
                         </li>
-                        <li class="menu-item active">
+                        <li class="menu-item ${window.location.search.includes('action=messages') ? 'active' : ''}">
                             <a href="?action=messages" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-message"></i>
                                 <div data-i18n="Messages">Trò chuyện</div>
                             </a>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=nurse_income') ? 'active' : ''}">
                             <a href="?action=nurse_income" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-wallet"></i>
                                 <div data-i18n="nurse_income">Thống Kê Thu Nhập</div>
@@ -400,13 +372,13 @@ if (!$user) {
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Tài Khoản</span>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=nurse_profile') ? 'active open' : ''}">
                             <a href="javascript:void(0);" class="menu-link menu-toggle">
                                 <i class="menu-icon tf-icons bx bx-dock-top"></i>
                                 <div data-i18n="Account Settings">Cài Đặt Tài Khoản</div>
                             </a>
                             <ul class="menu-sub">
-                                <li class="menu-item">
+                                <li class="menu-item ${window.location.search.includes('action=nurse_profile') ? 'active' : ''}">
                                     <a href="?action=nurse_profile" class="menu-link">
                                         <div data-i18n="Account">Tài Khoản</div>
                                     </a>
@@ -428,7 +400,7 @@ if (!$user) {
                     <div class="app-brand demo">
                         <a href="?action=family_home" class="app-brand-link">
                             <span class="app-brand-logo demo">
-                                <img src="<?php echo $baseUrl; ?>/assets/img/favicon/favicon.png" alt="Logo" width="30" height="30">
+                                <img src="${baseUrl}/static/assets/img/favicon/favicon.png" alt="Logo" width="30" height="30">
                             </span>
                             <span class="app-brand-text demo text-body fw-bolder text-uppercase">NURSEBORN</span>
                         </a>
@@ -438,14 +410,14 @@ if (!$user) {
                     </div>
                     <div class="menu-inner-shadow"></div>
                     <ul class="menu-inner py-1">
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=family_home') ? 'active' : ''}">
                             <a href="?action=family_home" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                                <div data-i18n="Analytics">Home</div>
+                                <div data-i18n="Analytics">Trang chủ</div>
                             </a>
                         </li>
-                        <li class="menu-item">
-                            <a href="?action=family_bookings" class="menu-link">
+                        <li class="menu-item ${window.location.search.includes('action=bookings') ? 'active' : ''}">
+                            <a href="?action=bookings" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-dock-top"></i>
                                 <div data-i18n="Analytics">Danh Sách Lịch Đặt</div>
                             </a>
@@ -453,13 +425,13 @@ if (!$user) {
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Quản lý Gia đình</span>
                         </li>
-                        <li class="menu-item">
-                            <a href="?action=nurse_list" class="menu-link">
+                        <li class="menu-item ${window.location.search.includes('action=nursepage') ? 'active' : ''}">
+                            <a href="?action=nursepage" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-search"></i>
                                 <div data-i18n="FindNurse">Đặt dịch vụ</div>
                             </a>
                         </li>
-                        <li class="menu-item active">
+                        <li class="menu-item ${window.location.search.includes('action=messages') ? 'active' : ''}">
                             <a href="?action=messages" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-message"></i>
                                 <div data-i18n="Messages">Trò chuyện</div>
@@ -468,19 +440,19 @@ if (!$user) {
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Tài khoản</span>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=user_profile') ? 'active' : ''}">
                             <a href="?action=user_profile" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-dock-top"></i>
                                 <div data-i18n="Profile">Hồ sơ</div>
                             </a>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=update_user') ? 'active' : ''}">
                             <a href="?action=update_user" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-dock-top"></i>
                                 <div data-i18n="UpdateProfile">Cập nhật hồ sơ</div>
                             </a>
                         </li>
-                        <li class="menu-item">
+                        <li class="menu-item ${window.location.search.includes('action=notifications') ? 'active' : ''}">
                             <a href="?action=notifications" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-bell"></i>
                                 <div data-i18n="notifications">Thông Báo</div>
@@ -501,7 +473,7 @@ if (!$user) {
                     <div class="app-brand demo">
                         <a href="/" class="app-brand-link">
                             <span class="app-brand-logo demo">
-                                <img src="<?php echo $baseUrl; ?>/assets/img/favicon/favicon.png" alt="Logo" width="30" height="30">
+                                <img src="${baseUrl}/static/assets/img/favicon/favicon.png" alt="Logo" width="30" height="30">
                             </span>
                             <span class="app-brand-text demo text-body fw-bolder text-uppercase">NURSEBORN</span>
                         </a>
@@ -523,6 +495,7 @@ if (!$user) {
         }
     }
 
+    // Hàm để thêm navbar dựa trên vai trò
     function loadNavbarBasedOnRole() {
         const navbarPlaceholder = document.getElementById('navbar-placeholder');
 
@@ -591,7 +564,7 @@ if (!$user) {
                             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <div class="avatar avatar-online">
-                                        <img src="<?php echo $baseUrl; ?>/static/assets/img/avatars/default_profile.jpg" alt="Ảnh đại diện" class="w-px-40 h-auto rounded-circle" />
+                                        <img src="${baseUrl}/static/assets/img/avatars/default_profile.jpg" alt="Ảnh đại diện" class="w-px-40 h-auto rounded-circle" />
                                     </div>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -600,7 +573,7 @@ if (!$user) {
                                             <div class="d-flex">
                                                 <div class="flex-shrink-0 me-3">
                                                     <div class="avatar avatar-online">
-                                                        <img src="<?php echo $baseUrl; ?>/static/assets/img/avatars/default_profile.jpg" alt="Ảnh đại diện" class="w-px-40 h-auto rounded-circle" />
+                                                        <img src="${baseUrl}/static/assets/img/avatars/default_profile.jpg" alt="Ảnh đại diện" class="w-px-40 h-auto rounded-circle" />
                                                     </div>
                                                 </div>
                                                 <div class="flex-grow-1">
@@ -645,6 +618,7 @@ if (!$user) {
         }
     }
 
+    // Gọi hàm loadMenuBasedOnRole và loadNavbarBasedOnRole khi trang được tải
     document.addEventListener('DOMContentLoaded', function() {
         try {
             loadMenuBasedOnRole();
@@ -659,6 +633,7 @@ if (!$user) {
                 console.error('Menu class is not defined. Ensure menu.js is loaded correctly.');
             }
 
+            // Kiểm tra quyền truy cập cho ADMIN
             if (currentUser.role === 'ADMIN') {
                 console.log('Admin không có quyền truy cập vào nhắn tin');
                 document.querySelector('.chat-container').innerHTML = '<p class="error-message">Không có quyền truy cập</p>';
@@ -672,22 +647,15 @@ if (!$user) {
     });
 
     function loadConversationPartners() {
-        if (!currentUser.userId) {
-            console.error('Không có userId để tải danh sách trò chuyện');
-            document.getElementById('conversation-list').innerHTML = '<li class="error-message">Vui lòng đăng nhập để xem danh sách trò chuyện</li>';
-            return;
-        }
-
         console.log('Bắt đầu tải danh sách đối tác trò chuyện cho userId:', currentUser.userId);
-        fetch(`<?php echo $baseUrl; ?>/index.php?action=messages&subaction=partners&user_id=${currentUser.userId}`, {
+        fetch(`${baseUrl}/controllers/MessageController.php?action=get_partners&userId=${currentUser.userId}`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                [header]: token
+                'Content-Type': 'application/json'
             }
         })
             .then(response => {
-                console.log('Response từ /index.php?action=messages&subaction=partners:', response.status, response.statusText);
+                console.log('Response từ /controllers/MessageController.php?action=get_partners:', response.status, response.statusText);
                 if (!response.ok) {
                     if (response.status === 403) {
                         document.querySelector('.chat-container').innerHTML = '<p class="error-message">Bạn không có quyền truy cập trang này</p>';
@@ -697,44 +665,26 @@ if (!$user) {
                         throw new Error(`HTTP error! Status: ${response.status}, Response: ${text}`);
                     });
                 }
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return response.text().then(text => {
-                        throw new Error(`Response không phải JSON: ${text}`);
-                    });
-                }
                 return response.json();
             })
             .then(data => {
-                console.log('Dữ liệu trả về từ API (danh sách đối tác):', data);
+                console.log('Dữ liệu trả về từ /controllers/MessageController.php?action=get_partners:', data);
                 let partners = data;
                 if (data.error) {
                     throw new Error(data.error);
                 }
                 const list = document.getElementById('conversation-list');
                 list.innerHTML = '';
-                if (!Array.isArray(partners) || partners.length === 0) {
+                if (!partners || partners.length === 0) {
                     list.innerHTML = '<li class="no-data">Không có cuộc trò chuyện nào</li>';
                     return;
                 }
-                // Kiểm tra xem dữ liệu có phải là danh sách người dùng không
-                if (partners.some(partner => partner.message_id || partner.content)) {
-                    throw new Error('Dữ liệu trả về không phải danh sách người dùng mà là danh sách tin nhắn');
-                }
                 partners.forEach(partner => {
-                    if (!partner || !partner.user_id) {
-                        console.warn('Dữ liệu đối tác không hợp lệ:', partner);
-                        return;
-                    }
                     const li = document.createElement('li');
-                    li.textContent = partner.full_name || partner.username || 'Người dùng không xác định';
-                    li.setAttribute('data-user-id', partner.user_id);
+                    li.textContent = partner.fullName || partner.username;
+                    li.setAttribute('data-user-id', partner.userId);
                     li.onclick = function() {
-                        selectUser({
-                            userId: partner.user_id,
-                            username: partner.username,
-                            fullName: partner.full_name
-                        });
+                        selectUser(partner);
                     };
                     list.appendChild(li);
                 });
@@ -748,7 +698,7 @@ if (!$user) {
     }
 
     function selectUser(user) {
-        selectedUser = user;
+        selectedPartnerId = user;
         document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('selected'));
         const selectedLi = document.querySelector(`.sidebar li[data-user-id="${user.userId}"]`);
         if (selectedLi) {
@@ -759,17 +709,16 @@ if (!$user) {
     }
 
     function loadMessages() {
-        if (!selectedUser) return;
-        console.log('Tải tin nhắn giữa', currentUser.userId, 'và', selectedUser.userId);
-        fetch(`<?php echo $baseUrl; ?>/index.php?action=get_conversation&sender_id=${currentUser.userId}&receiver_id=${selectedUser.userId}`, {
+        if (!selectedPartnerId) return;
+        console.log('Tải tin nhắn giữa', currentUser.userId, 'và', selectedPartnerId.userId);
+        fetch(`${baseUrl}/controllers/MessageController.php?action=get_conversation&senderId=${currentUser.userId}&receiverId=${selectedPartnerId.userId}`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                [header]: token
+                'Content-Type': 'application/json'
             }
         })
             .then(response => {
-                console.log('Response từ /index.php?action=get_conversation:', response.status, response.statusText);
+                console.log('Response từ /controllers/MessageController.php?action=get_conversation:', response.status, response.statusText);
                 if (!response.ok) {
                     if (response.status === 403) {
                         document.querySelector('.chat-container').innerHTML = '<p class="error-message">Bạn không có quyền truy cập trang này</p>';
@@ -779,16 +728,10 @@ if (!$user) {
                         throw new Error(`HTTP error! Status: ${response.status}, Response: ${text}`);
                     });
                 }
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return response.text().then(text => {
-                        throw new Error(`Response không phải JSON: ${text}`);
-                    });
-                }
                 return response.json();
             })
             .then(messages => {
-                console.log('Dữ liệu tin nhắn:', messages);
+                console.log('Tin nhắn:', messages);
                 const messagesDiv = document.getElementById('messages');
                 messagesDiv.innerHTML = '';
                 displayedMessages.clear();
@@ -816,12 +759,11 @@ if (!$user) {
     }
 
     function checkNewMessages() {
-        if (!selectedUser) return;
-        fetch(`<?php echo $baseUrl; ?>/index.php?action=get_conversation&sender_id=${currentUser.userId}&receiver_id=${selectedUser.userId}`, {
+        if (!selectedPartnerId) return;
+        fetch(`${baseUrl}/controllers/MessageController.php?action=get_conversation&senderId=${currentUser.userId}&receiverId=${selectedPartnerId.userId}`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                [header]: token
+                'Content-Type': 'application/json'
             }
         })
             .then(response => {
@@ -832,12 +774,6 @@ if (!$user) {
                     }
                     return response.text().then(text => {
                         throw new Error(`HTTP error! Status: ${response.status}, Response: ${text}`);
-                    });
-                }
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return response.text().then(text => {
-                        throw new Error(`Response không phải JSON: ${text}`);
                     });
                 }
                 return response.json();
@@ -880,7 +816,7 @@ if (!$user) {
     }
 
     function sendMessage() {
-        if (!selectedUser) {
+        if (!selectedPartnerId) {
             alert('Vui lòng chọn một người để trò chuyện');
             return;
         }
@@ -890,24 +826,21 @@ if (!$user) {
             return;
         }
 
-        const messageDTO = {
-            sender_id: currentUser.userId,
-            receiver_id: selectedUser.userId,
-            content: content,
-            sent_at: new Date().toISOString(),
-            is_read: false
+        const messageData = {
+            senderId: currentUser.userId,
+            receiverId: selectedPartnerId.userId,
+            content: content
         };
 
-        fetch('<?php echo $baseUrl; ?>/index.php?action=send_message', {
+        fetch(`${baseUrl}/controllers/MessageController.php?action=send_message`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                [header]: token
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(messageDTO)
+            body: JSON.stringify(messageData)
         })
             .then(response => {
-                console.log('Response từ /index.php?action=send_message:', response.status, response.statusText);
+                console.log('Response từ /controllers/MessageController.php?action=send_message:', response.status, response.statusText);
                 if (!response.ok) {
                     if (response.status === 403) {
                         document.querySelector('.chat-container').innerHTML = '<p class="error-message">Bạn không có quyền truy cập trang này</p>';
@@ -915,12 +848,6 @@ if (!$user) {
                     }
                     return response.text().then(text => {
                         throw new Error(`HTTP error! Status: ${response.status}, Response: ${text}`);
-                    });
-                }
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return response.text().then(text => {
-                        throw new Error(`Response không phải JSON: ${text}`);
                     });
                 }
                 return response.json();
@@ -941,16 +868,14 @@ if (!$user) {
     }
 
     function markAsRead(messageId) {
-        fetch(`<?php echo $baseUrl; ?>/index.php?action=mark_message_as_read`, {
+        fetch(`${baseUrl}/controllers/MessageController.php?action=mark_message_as_read&messageId=${messageId}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                [header]: token
-            },
-            body: JSON.stringify({ message_id: messageId })
+                'Content-Type': 'application/json'
+            }
         })
             .then(response => {
-                console.log('Response từ /index.php?action=mark_message_as_read:', response.status, response.statusText);
+                console.log('Response từ /controllers/MessageController.php?action=mark_message_as_read:', response.status, response.statusText);
                 if (!response.ok) {
                     if (response.status === 403) {
                         document.querySelector('.chat-container').innerHTML = '<p class="error-message">Bạn không có quyền truy cập trang này</p>';
@@ -958,12 +883,6 @@ if (!$user) {
                     }
                     return response.text().then(text => {
                         throw new Error(`HTTP error! Status: ${response.status}, Response: ${text}`);
-                    });
-                }
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return response.text().then(text => {
-                        throw new Error(`Response không phải JSON: ${text}`);
                     });
                 }
                 return response.json();
