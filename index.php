@@ -35,6 +35,14 @@ $nurseControllerActions = [
     'cancel_booking'
 ];
 
+// Danh sách các action thuộc MessageController
+$messageActions = [
+    'messages',
+    'send_message',
+    'mark_message_as_read',
+    'get_conversation' // Thêm action mới
+];
+
 // Lấy action từ query string, mặc định là 'home'
 $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING) ?? 'home';
 
@@ -48,6 +56,8 @@ try {
         $controllerFile = __DIR__ . '/controllers/BookingController.php';
     } elseif (in_array($action, $nurseControllerActions)) {
         $controllerFile = __DIR__ . '/controllers/NurseController.php';
+    } elseif (in_array($action, $messageActions)) {
+        $controllerFile = __DIR__ . '/controllers/MessageController.php';
     } else {
         $controllerFile = __DIR__ . '/controllers/UserController.php';
     }
