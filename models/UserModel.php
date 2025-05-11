@@ -168,7 +168,13 @@ class UserModel {
         // Nếu role là FAMILY, cập nhật thông tin gia đình
         $user = $this->getUserById($userId);
         if ($user['role'] === 'FAMILY' && $familyData) {
-            $this->familyProfileModel->updateFamilyProfile($userId, $familyData);
+            $this->familyProfileModel->updateFamilyProfile(
+                $userId, 
+                $familyData['child_name'] ?? null, 
+                $familyData['child_age'] ?? null, 
+                $familyData['preferred_location'] ?? null, 
+                $familyData['specific_needs'] ?? null
+            );
         }
 
         return $this->getUserById($userId);
