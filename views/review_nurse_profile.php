@@ -1,11 +1,11 @@
 <?php
-$baseUrl = '';
+$baseUrl = '/nurseborn'; // Cập nhật baseUrl
 $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
 $nurseProfiles = $nurseProfiles ?? [];
 ?>
 
 <!DOCTYPE html>
-<html lang="vi" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="<?php echo $baseUrl; ?>static/assets/" data-template="vertical-menu-template-free">
+<html lang="vi" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="<?php echo $baseUrl; ?>/static/assets/" data-template="vertical-menu-template-free">
 <head>
     <?php include __DIR__ . '/fragments/head.php'; ?>
     <style>
@@ -216,10 +216,15 @@ $nurseProfiles = $nurseProfiles ?? [];
                         </div>
                     <?php else: ?>
                         <?php foreach ($nurseProfiles as $nurse): ?>
+                            <?php
+                            // Debug đường dẫn ảnh
+                            error_log("Review Nurse Profile Image: " . ($nurse['profile_image'] ?? 'Not set'));
+                            error_log("Review Final Image URL: " . $baseUrl . '/' . ltrim($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg', '/'));
+                            ?>
                             <div class="card mb-4">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-3">
-                                        <img src="<?php echo htmlspecialchars($nurse['profile_image'] ?? $baseUrl . 'static/assets/img/avatars/default_profile.jpg'); ?>" alt="Ảnh hồ sơ" class="rounded-circle me-3" />
+                                        <img src="<?php echo $baseUrl . '/' . htmlspecialchars(ltrim($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg', '/')); ?>" alt="Ảnh hồ sơ" class="rounded-circle me-3" />
                                         <div>
                                             <h5 class="mb-1"><?php echo htmlspecialchars($nurse['full_name'] ?? 'Chưa xác định'); ?></h5>
                                             <p class="mb-0"><strong>ID:</strong> <?php echo htmlspecialchars($nurse['nurse_profile_id'] ?? 'Chưa xác định'); ?></p>
@@ -291,9 +296,13 @@ $nurseProfiles = $nurseProfiles ?? [];
                                         <?php if (!empty($nurse['certificates'])): ?>
                                             <ul>
                                                 <?php foreach ($nurse['certificates'] as $certificate): ?>
+                                                    <?php
+                                                    error_log("Certificate File Path: " . ($certificate['file_path'] ?? 'Not set'));
+                                                    error_log("Certificate Final URL: " . $baseUrl . '/' . ltrim($certificate['file_path'] ?? 'Not set', '/'));
+                                                    ?>
                                                     <li>
                                                         <?php echo htmlspecialchars($certificate['certificate_name']); ?>
-                                                        (<a href="<?php echo htmlspecialchars($certificate['file_path']); ?>" target="_blank">Xem file</a>)
+                                                        (<a href="<?php echo $baseUrl . '/' . htmlspecialchars(ltrim($certificate['file_path'], '/')); ?>" target="_blank">Xem file</a>)
                                                     </li>
                                                 <?php endforeach; ?>
                                             </ul>

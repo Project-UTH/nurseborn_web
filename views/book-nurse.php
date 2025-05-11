@@ -234,7 +234,7 @@ $hasValidPricing = !(
                         <div class="card-body">
                             <!-- Hiển thị thông tin y tá -->
                             <div class="nurse-info">
-                                <img src="<?php echo htmlspecialchars($nurse['profile_image'] ?? '../assets/img/avatars/default_profile.jpg'); ?>" 
+                                <img src="<?php echo $baseUrl . htmlspecialchars($nurse['profile_image'] ?? '../assets/img/avatars/default_profile.jpg'); ?>" 
                                      alt="Ảnh Y Tá"/>
                                 <h5 class="card-title">
                                     <?php echo htmlspecialchars($nurse['full_name']); ?> | 

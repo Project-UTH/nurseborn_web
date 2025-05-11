@@ -1,5 +1,6 @@
 <?php
 $pageTitle = 'Danh sách Y Tá';
+$baseUrl = '/nurseborn';
 include 'fragments/head.php';
 include 'fragments/navbar.php';
 
@@ -185,13 +186,16 @@ $feedbackModel = new FeedbackModel($conn);
                                     $averageRating = $feedbackModel->getAverageRatingByNurseUserId($nurse['user_id']);
                                     // Kiểm tra user_id tồn tại trước khi tạo liên kết
                                     $nurseUserId = isset($nurse['user_id']) ? htmlspecialchars($nurse['user_id']) : '';
+                                    // Debug đường dẫn ảnh
+                                    error_log("Nurse Profile Image: " . ($nurse['profile_image'] ?? 'Not set'));
+                                    error_log("Final Image URL: " . $baseUrl . ($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg'));
                                     ?>
                                     <div class="col-md-4 mb-4 nurse-card" 
                                          data-name="<?php echo htmlspecialchars($nurse['full_name']); ?>" 
                                          data-skills="<?php echo htmlspecialchars($nurse['skills'] ?? ''); ?>" 
                                          data-location="<?php echo htmlspecialchars($nurse['location'] ?? ''); ?>">
                                         <div class="card">
-                                            <img src="<?php echo htmlspecialchars($nurse['profile_image'] ?? '../assets/img/avatars/default_profile.jpg'); ?>" 
+                                            <img src="<?php echo $baseUrl . htmlspecialchars($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg'); ?>" 
                                                  class="card-img-top" alt="Ảnh Y Tá"/>
                                             <div class="average-rating">
                                                 <i class="fas fa-star"></i>

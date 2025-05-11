@@ -7,6 +7,7 @@ include 'fragments/navbar.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/NurseProfileModel.php';
 require_once __DIR__ . '/../models/FeedbackModel.php';
+$baseUrl = '/nurseborn'; // Cập nhật baseUrl
 $userModel = new UserModel($conn);
 $nurseProfileModel = new NurseProfileModel($conn);
 $feedbackModel = new FeedbackModel($conn);
@@ -42,7 +43,8 @@ if ($nurseProfile) {
     $nurse['daily_rate'] = $nurseProfile['daily_rate'] ?? null;
     $nurse['weekly_rate'] = $nurseProfile['weekly_rate'] ?? null;
     $nurse['bio'] = $nurseProfile['bio'] ?? null;
-    $nurse['skills'] = $nurseProfile['specialization'] ?? null; // Giả định specialization là skills
+    $nurse['skills'] = $nurseProfile['specialization'] ?? null;
+    $nurse['profile_image'] = $nurseProfile['profile_image'] ?? null; // Thêm dòng này
 } else {
     $nurse['experience_years'] = null;
     $nurse['hourly_rate'] = null;
@@ -50,6 +52,7 @@ if ($nurseProfile) {
     $nurse['weekly_rate'] = null;
     $nurse['bio'] = null;
     $nurse['skills'] = null;
+    $nurse['profile_image'] = null; // Thêm dòng này
 }
 
 // Lấy số sao trung bình và danh sách đánh giá
@@ -221,7 +224,11 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
                             <div class="card shadow-lg mb-4">
                                 <div class="row g-0">
                                     <div class="col-md-5">
-                                        <img src="<?php echo htmlspecialchars($nurse['profile_image'] ?? '../assets/img/avatars/default_profile.jpg'); ?>"
+                                        <?php
+                                        error_log("Nurse Review Profile Image: " . ($nurse['profile_image'] ?? 'Not set'));
+                                        error_log("Nurse Review Final Image URL: " . $baseUrl . ($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg'));
+                                        ?>
+                                        <img src="<?php echo $baseUrl . htmlspecialchars($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg'); ?>"
                                              class="img-fluid card-img-top" alt="Ảnh Y Tá">
                                         <div class="average-rating">
                                             <i class="fas fa-star"></i>

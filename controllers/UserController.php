@@ -404,6 +404,7 @@ switch ($action) {
                     if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) {
                         throw new Exception("Ảnh đại diện phải là JPEG, PNG hoặc GIF");
                     }
+                    
                     $uploadDir = 'uploads/profile_images/';
                     if (!is_dir($uploadDir)) {
                         mkdir($uploadDir, 0777, true);
@@ -419,7 +420,7 @@ switch ($action) {
 
                 // Xử lý chứng chỉ
                 if (isset($_FILES['certificates']) && !empty($_FILES['certificates']['name'][0])) {
-                    $uploadDir = 'Uploads/certificates/';
+                    $uploadDir = 'uploads/certificates/';
                     if (!is_dir($uploadDir)) {
                         mkdir($uploadDir, 0777, true);
                     }
@@ -676,7 +677,7 @@ switch ($action) {
                         if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) {
                             throw new Exception("Ảnh đại diện phải là JPEG, PNG hoặc GIF");
                         }
-                        $uploadDir = 'Uploads/profile_images/';
+                        $uploadDir = 'uploads/certificates/';
                         if (!is_dir($uploadDir)) {
                             mkdir($uploadDir, 0777, true);
                         }
@@ -695,7 +696,7 @@ switch ($action) {
 
                     // Xử lý chứng chỉ
                     if (isset($_FILES['certificates']) && !empty($_FILES['certificates']['name'][0])) {
-                        $uploadDir = 'Uploads/certificates/';
+                        $uploadDir = 'uploads/certificates/';
                         if (!is_dir($uploadDir)) {
                             mkdir($uploadDir, 0777, true);
                         }

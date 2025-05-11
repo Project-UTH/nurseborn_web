@@ -7,7 +7,7 @@ error_reporting(E_ALL);
 $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
 $bookings = isset($bookings) ? $bookings : [];
 $pageTitle = 'Danh Sách Lịch Đặt';
-$baseUrl = '/nurseborn';
+$baseUrl = '/nurseborn'; // Cập nhật baseUrl
 error_log("Debug: Đã vào file bookings.php");
 error_log("Debug: Dữ liệu bookings trong bookings.php: " . print_r($bookings, true));
 ?>
@@ -229,7 +229,7 @@ error_log("Debug: Dữ liệu bookings trong bookings.php: " . print_r($bookings
     <div class="layout-container">
         <?php include __DIR__ . '/fragments/menu-family.php'; ?>
         <div class="layout-page">
-            <?php include __DIR__ . '/fragments/navbar-nurse.php'; ?>
+            <?php include __DIR__ . '/fragments/navbar.php'; ?>
             <div class="content-wrapper">
                 <div class="content-xxl flex-grow-1 container-p-y">
                     <div class="card mb-4">
@@ -279,7 +279,8 @@ error_log("Debug: Dữ liệu bookings trong bookings.php: " . print_r($bookings
                                                             <i class="fas fa-clock"></i>
                                                             <strong>Giờ bắt đầu:</strong>
                                                             <?php echo htmlspecialchars($booking['start_time']); ?>
-                                                            <br>
+                                                        </p>
+                                                        <p class="card-text">
                                                             <i class="fas fa-clock"></i>
                                                             <strong>Giờ kết thúc:</strong>
                                                             <?php echo htmlspecialchars($booking['end_time']); ?>
