@@ -1,16 +1,17 @@
-
 <?php
 require_once __DIR__ . '/../config/connect.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/NurseProfileModel.php';
 require_once __DIR__ . '/../models/FamilyProfileModel.php';
 require_once __DIR__ . '/../models/CertificateModel.php';
+require_once __DIR__ . '/../models/BookingModel.php'; // Thêm lại dòng này
 
 // Khởi tạo models
 $userModel = new UserModel($conn);
 $nurseProfileModel = new NurseProfileModel($conn);
 $familyProfileModel = new FamilyProfileModel($conn);
 $certificateModel = new CertificateModel($conn);
+$bookingModel = new BookingModel($conn); // Thêm lại dòng này
 
 // Hàm kiểm tra đăng nhập
 function isLoggedIn() {
@@ -800,7 +801,6 @@ switch ($action) {
         }
         break;
 
-
     case 'nursepage':
         if (isLoggedIn() && getUserRole() === 'FAMILY') {
             // Lấy danh sách y tá đã được phê duyệt từ database
@@ -812,7 +812,6 @@ switch ($action) {
         }
         break;
 
-
     case 'logout':
         session_destroy();
         header('Location: ?action=login&logout=1');
@@ -823,5 +822,3 @@ switch ($action) {
         break;
 }
 ?>
-
-
