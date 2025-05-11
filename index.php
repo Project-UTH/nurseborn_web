@@ -3,7 +3,8 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
+// Debug session ngay sau khi khởi tạo
+error_log("Session in index.php (before routing): " . print_r($_SESSION, true));
 // Danh sách các action thuộc NurseAvailabilityController
 $nurseActions = [
     'nurse_availability',
@@ -25,7 +26,7 @@ $bookingActions = [
     'cancel_booking',
     'feedback',
     'submit_feedback',
-    'nurse_review' // Đã có sẵn
+    'nurse_review'
 ];
 
 // Danh sách các action thuộc NurseController
@@ -33,6 +34,15 @@ $nurseControllerActions = [
     'pending_bookings',
     'accept_booking',
     'cancel_booking'
+];
+
+// Danh sách các action thuộc MessageController
+$messageActions = [
+    'messages',
+    'send_message',
+    'mark_message_as_read',
+    'get_conversation',
+    'get_partners' // Thêm action mới
 ];
 
 // Lấy action từ query string, mặc định là 'home'
@@ -48,6 +58,8 @@ try {
         $controllerFile = __DIR__ . '/controllers/BookingController.php';
     } elseif (in_array($action, $nurseControllerActions)) {
         $controllerFile = __DIR__ . '/controllers/NurseController.php';
+    } elseif (in_array($action, $messageActions)) {
+        $controllerFile = __DIR__ . '/controllers/MessageController.php';
     } else {
         $controllerFile = __DIR__ . '/controllers/UserController.php';
     }
