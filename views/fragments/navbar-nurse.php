@@ -12,7 +12,7 @@ if (!$nurseProfile && $user && isset($user['user_id'])) {
 
 // Đường dẫn ảnh đại diện
 $profileImage = $nurseProfile && isset($nurseProfile['profile_image']) 
-    ? $nurseProfile['profile_image'] 
+    ? htmlspecialchars($nurseProfile['profile_image']) 
     : '/static/assets/img/avatars/default_profile.jpg';
 
 // Debug
@@ -32,16 +32,16 @@ error_log("Navbar Final Image URL: " . $baseUrl . $profileImage);
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                     <div class="avatar avatar-online">
-                        <img src="<?php echo $baseUrl . htmlspecialchars($profileImage); ?>" alt class="w-px-40 h-auto rounded-circle" />
+                        <img src="<?php echo $baseUrl . $profileImage; ?>" alt="Ảnh đại diện" class="rounded-circle" />
                     </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
                         <a class="dropdown-item" href="?action=nurse_profile">
-                            <div class="d-flex">
+                            <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0 me-3">
                                     <div class="avatar avatar-online">
-                                        <img src="<?php echo $baseUrl . htmlspecialchars($profileImage); ?>" alt class="w-px-40 h-auto rounded-circle" />
+                                        <img src="<?php echo $baseUrl . $profileImage; ?>" alt="Ảnh đại diện" class="rounded-circle" />
                                     </div>
                                 </div>
                                 <div class="flex-grow-1">
@@ -59,6 +59,9 @@ error_log("Navbar Final Image URL: " . $baseUrl . $profileImage);
                             <i class="bx bx-user me-2"></i>
                             <span class="align-middle">Hồ sơ</span>
                         </a>
+                    </li>
+                    <li>
+                        <div class="dropdown-divider"></div>
                     </li>
                     <li>
                         <a class="dropdown-item" href="?action=logout">
@@ -102,10 +105,19 @@ error_log("Navbar Final Image URL: " . $baseUrl . $profileImage);
     }
     .avatar-online {
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
     }
     .avatar-online img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
         border: 2px solid #fff;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        border-radius: 50%;
     }
     .dropdown-menu {
         background: #fff;
@@ -119,6 +131,8 @@ error_log("Navbar Final Image URL: " . $baseUrl . $profileImage);
         color: #343a40;
         font-size: 0.95rem;
         font-weight: 500;
+        display: flex;
+        align-items: center;
         transition: background 0.3s ease, color 0.3s ease;
     }
     .dropdown-item:hover {
@@ -143,7 +157,6 @@ error_log("Navbar Final Image URL: " . $baseUrl . $profileImage);
         color: #6c757d !important;
         font-size: 0.85rem;
     }
-
     /* Responsive Adjustments */
     @media (max-width: 992px) {
         .layout-navbar {
@@ -154,9 +167,13 @@ error_log("Navbar Final Image URL: " . $baseUrl . $profileImage);
         }
     }
     @media (max-width: 768px) {
+        .avatar-online {
+            width: 35px;
+            height: 35px;
+        }
         .avatar-online img {
-            width: 35px !important;
-            height: 35px !important;
+            width: 100%;
+            height: 100%;
         }
         .dropdown-item {
             font-size: 0.9rem;

@@ -87,6 +87,7 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
 <!DOCTYPE html>
 <html lang="vi" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="<?php echo $baseUrl; ?>/static/assets/" data-template="vertical-menu-template-free">
 <head>
+    <?php include __DIR__ . '/fragments/head.php'; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?></title>
@@ -104,6 +105,13 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
         }
         .container {
             max-width: 1000px;
+        }
+        .menu-link, .menu-link:hover, .menu-link:active, .menu-link:focus,
+        .app-brand-link, .app-brand-link:hover, .app-brand-link:active, .app-brand-link:focus {
+            text-decoration: none !important;
+        }
+        .menu-sub .menu-link {
+            padding-left: 2.5rem;
         }
         h2.text-center {
             font-size: 2.5rem;

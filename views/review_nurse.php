@@ -56,6 +56,7 @@ $feedbacks = $feedbackModel->getFeedbackByNurseUserId($nurseUserId);
 <!DOCTYPE html>
 <html lang="vi" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="<?php echo $baseUrl; ?>/static/assets/" data-template="vertical-menu-template-free">
 <head>
+    <?php include __DIR__ . '/fragments/head.php'; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?></title>
@@ -73,6 +74,13 @@ $feedbacks = $feedbackModel->getFeedbackByNurseUserId($nurseUserId);
             min-height: 100vh;
             margin: 0;
             overflow-x: hidden;
+        }
+        .menu-link, .menu-link:hover, .menu-link:active, .menu-link:focus,
+        .app-brand-link, .app-brand-link:hover, .app-brand-link:active, .app-brand-link:focus {
+            text-decoration: none !important;
+        }
+        .menu-sub .menu-link {
+            padding-left: 2.5rem;
         }
         .container {
             max-width: 900px;

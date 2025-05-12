@@ -219,7 +219,25 @@ $baseUrl = '/nurseborn';
             text-decoration: underline;
         }
 
-        /* Responsive Adjustments */
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-check-input {
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+        }
+
+        .form-check-label {
+            font-size: 1rem;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .container-xxl {
                 padding: 1.5rem;
@@ -268,14 +286,18 @@ $baseUrl = '/nurseborn';
                     <form id="formAuthentication" class="mb-3" action="?action=login" method="POST">
                         <div class="mb-3">
                             <label for="username" class="form-label"><i class="fas fa-user"></i> Tên đăng nhập</label>
-                            <input type="text" class="form-control" id="username" name="username" placeholder="Nhập tên đăng nhập" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" autofocus required />
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Nhập tên đăng nhập" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : (isset($_COOKIE['username']) ? htmlspecialchars($_COOKIE['username']) : ''); ?>" autofocus required />
                         </div>
                         <div class="mb-3 form-password-toggle">
                             <label class="form-label" for="password"><i class="fas fa-lock"></i> Mật khẩu</label>
                             <div class="input-group input-group-merge">
-                                <input type="password" id="password" class="form-control" name="password" placeholder="············" aria-describedby="password" required />
+                                <input type="password" id="password" class="form-control" name="password" placeholder="············" aria-describedby="password" value="<?php echo isset($_COOKIE['password']) ? htmlspecialchars($_COOKIE['password']) : ''; ?>" required />
                                 <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
                             </div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe" <?php echo isset($_COOKIE['username']) && isset($_COOKIE['password']) ? 'checked' : ''; ?> />
+                            <label class="form-check-label" for="rememberMe">Ghi nhớ đăng nhập</label>
                         </div>
                         <?php if (isset($_SESSION['error'])): ?>
                             <div class="mb-3">
@@ -317,9 +339,7 @@ $baseUrl = '/nurseborn';
         const form = document.getElementById("formAuthentication");
         if (form) {
             form.addEventListener("submit", function(event) {
-                console.log("Form đăng nhập đang được gửi...");
-                console.log("Username:", document.querySelector("input[name='username']").value);
-                console.log("Password:", document.querySelector("input[name='password']").value);
+                console.log("Biểu mẫu đăng nhập đang được gửi...");
             });
         } else {
             console.error("Không tìm thấy formAuthentication");

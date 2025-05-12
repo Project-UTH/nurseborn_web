@@ -21,16 +21,16 @@ $role = $user ? htmlspecialchars($user['role']) : 'Khách';
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                     <div class="avatar avatar-online">
-                        <img src="<?php echo $baseUrl . $avatar; ?>" alt="Ảnh đại diện" class="w-px-40 h-auto rounded-circle" />
+                        <img src="<?php echo $baseUrl . $avatar; ?>" alt="Ảnh đại diện" class="rounded-circle" />
                     </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
                         <a class="dropdown-item" href="?action=user_profile">
-                            <div class="d-flex">
+                            <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0 me-3">
                                     <div class="avatar avatar-online">
-                                        <img src="<?php echo $baseUrl . $avatar; ?>" alt="Ảnh đại diện" class="w-px-40 h-auto rounded-circle" />
+                                        <img src="<?php echo $baseUrl . $avatar; ?>" alt="Ảnh đại diện" class="rounded-circle" />
                                     </div>
                                 </div>
                                 <div class="flex-grow-1">
@@ -94,10 +94,19 @@ $role = $user ? htmlspecialchars($user['role']) : 'Khách';
     }
     .avatar-online {
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
     }
     .avatar-online img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
         border: 2px solid #fff;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        border-radius: 50%;
     }
     .dropdown-menu {
         background: #fff;
@@ -111,6 +120,8 @@ $role = $user ? htmlspecialchars($user['role']) : 'Khách';
         color: #343a40;
         font-size: 0.95rem;
         font-weight: 500;
+        display: flex;
+        align-items: center;
         transition: background 0.3s ease, color 0.3s ease;
     }
     .dropdown-item:hover {
@@ -135,7 +146,6 @@ $role = $user ? htmlspecialchars($user['role']) : 'Khách';
         color: #6c757d !important;
         font-size: 0.85rem;
     }
-
     /* Responsive Adjustments */
     @media (max-width: 992px) {
         .layout-navbar {
@@ -146,9 +156,13 @@ $role = $user ? htmlspecialchars($user['role']) : 'Khách';
         }
     }
     @media (max-width: 768px) {
+        .avatar-online {
+            width: 35px;
+            height: 35px;
+        }
         .avatar-online img {
-            width: 35px !important;
-            height: 35px !important;
+            width: 100%;
+            height: 100%;
         }
         .dropdown-item {
             font-size: 0.9rem;

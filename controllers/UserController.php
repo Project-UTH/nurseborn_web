@@ -302,26 +302,44 @@ switch ($action) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
             $password = $_POST['password'];
+            $rememberMe = isset($_POST['rememberMe']);
+
             if (empty($username) || empty($password)) {
                 $_SESSION['error'] = 'Vui lòng điền đầy đủ thông tin';
                 include __DIR__ . '/../views/login.php';
                 break;
             }
+
             try {
+                // Đăng nhập bằng UserModel
                 $response = $userModel->login($username, $password);
+
+                // Lưu thông tin người dùng vào phiên
                 $_SESSION['user_id'] = $response['user_id'];
                 $_SESSION['user_role'] = $response['role'];
+                $_SESSION['user'] = $response;
                 $_SESSION['success'] = 'Đăng nhập thành công';
 
-                // Kiểm tra vai trò và chuyển hướng
-                if ($response['role'] === 'FAMILY') {
-                    header('Location: ?action=home'); // Chuyển hướng đến nursepage.php cho FAMILY
-                } elseif ($response['role'] === 'NURSE') {
-                    header('Location: ?action=nurse_home'); // Chuyển hướng đến trang y tá
-                } elseif ($response['role'] === 'ADMIN') {
-                    header('Location: ?action=admin_home'); // Chuyển hướng đến trang admin
+                // Xử lý cookie cho "Ghi nhớ đăng nhập"
+                if ($rememberMe) {
+                    // Lưu cookie với thời hạn 30 ngày
+                    setcookie("username", $username, time() + (24 * 60 * 60), "/", "", false, true);
+                    setcookie("password", $password, time() + (24 * 60 * 60), "/", "", false, true);
                 } else {
-                    header('Location: ?action=home'); // Mặc định nếu vai trò không xác định
+                    // Xóa cookie nếu không chọn "Ghi nhớ đăng nhập"
+                    setcookie("username", "", time() - 3600, "/");
+                    setcookie("password", "", time() - 3600, "/");
+                }
+
+                // Chuyển hướng dựa trên vai trò
+                if ($response['role'] === 'FAMILY') {
+                    header('Location: ?action=home');
+                } elseif ($response['role'] === 'NURSE') {
+                    header('Location: ?action=nurse_home');
+                } elseif ($response['role'] === 'ADMIN') {
+                    header('Location: ?action=admin_home');
+                } else {
+                    header('Location: ?action=home');
                 }
                 exit;
             } catch (Exception $e) {
@@ -810,10 +828,17 @@ switch ($action) {
      break;
 
     case 'logout':
+        // Xóa tất cả dữ liệu phiên
+        $_SESSION = [];
         session_destroy();
+
+        // Xóa cookie "Ghi nhớ đăng nhập"
+        setcookie("username", "", time() - 3600, "/");
+        setcookie("password", "", time() - 3600, "/");
+
+        // Chuyển hướng về trang đăng nhập với thông báo
         header('Location: ?action=login&logout=1');
         exit;
-
     default:
         include __DIR__ . '/../views/home.php';
         break;
