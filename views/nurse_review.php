@@ -43,8 +43,20 @@ if ($nurseProfile) {
     $nurse['daily_rate'] = $nurseProfile['daily_rate'] ?? null;
     $nurse['weekly_rate'] = $nurseProfile['weekly_rate'] ?? null;
     $nurse['bio'] = $nurseProfile['bio'] ?? null;
-    $nurse['skills'] = $nurseProfile['specialization'] ?? null;
-    $nurse['profile_image'] = $nurseProfile['profile_image'] ?? null; // Thêm dòng này
+    // Kiểm tra cả specialization và skills
+    $nurse['skills'] = $nurseProfile['specialization'] ?? $nurseProfile['skills'] ?? null;
+    error_log("Debug: Skills value: " . ($nurse['skills'] ?? 'Not set'));
+    // Location có thể lấy từ users hoặc nurse_profiles
+    $nurse['location'] = $nurse['location'] ?? $nurseProfile['location'] ?? null;
+    error_log("Debug: Location value: " . ($nurse['location'] ?? 'Not set'));
+    $nurse['profile_image'] = $nurseProfile['profile_image'] ?? null;
+    // Explicitly fetch certificates if not included in $nurseProfile
+    if (!isset($nurseProfile['certificates'])) {
+        $nurseProfile['certificates'] = $nurseProfileModel->getCertificatesByUserId($nurseUserId) ?? [];
+        error_log("Debug: Fetched certificates separately: " . print_r($nurseProfile['certificates'], true));
+    }
+    $nurse['certificates'] = $nurseProfile['certificates'] ?? [];
+    error_log("Debug: Certificates in nurse array: " . print_r($nurse['certificates'], true));
 } else {
     $nurse['experience_years'] = null;
     $nurse['hourly_rate'] = null;
@@ -52,7 +64,9 @@ if ($nurseProfile) {
     $nurse['weekly_rate'] = null;
     $nurse['bio'] = null;
     $nurse['skills'] = null;
-    $nurse['profile_image'] = null; // Thêm dòng này
+    $nurse['location'] = $nurse['location'] ?? null;
+    $nurse['profile_image'] = null;
+    $nurse['certificates'] = [];
 }
 
 // Lấy số sao trung bình và danh sách đánh giá
@@ -62,20 +76,21 @@ error_log("Debug: Số sao trung bình: " . $averageRating);
 error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
 ?>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="<?php echo $baseUrl; ?>/static/assets/" data-template="vertical-menu-template-free">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thông Tin Y Tá</title>
-    <link rel="stylesheet" href="../assets/vendor/css/core.css">
-    <link rel="stylesheet" href="../assets/vendor/css/theme-default.css">
-    <link rel="stylesheet" href="../assets/css/demo.css">
-    <link rel="stylesheet" href="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/core.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/theme-default.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/css/demo.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
             background-color: #f5f7fa;
+            font-family: 'Poppins', sans-serif;
         }
         .container {
             max-width: 1000px;
@@ -111,11 +126,13 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
             border: none;
             border-radius: 15px;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.3s ease;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
             margin-bottom: 30px;
+            background: linear-gradient(145deg, #ffffff, #f0f4f8);
         }
         .card:hover {
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-8px);
         }
         .card-img-top {
             height: 220px;
@@ -138,6 +155,9 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
             color: #6c757d;
             font-size: 1rem;
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .card-body p strong {
             color: #2c3e50;
@@ -148,6 +168,27 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
             background: linear-gradient(45deg, #e3f2fd, #f8f9fa);
             padding: 2px 5px;
             border-radius: 3px;
+        }
+        .card-body i {
+            color: #0d6efd;
+            font-size: 1.1rem;
+        }
+        .card-body ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .card-body ul li {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        .card-body ul li a {
+            color: #0d6efd;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .card-body ul li a:hover {
+            color: #0056b3;
+            text-decoration: underline;
         }
         .average-rating {
             color: #ffc107;
@@ -217,80 +258,131 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
         <?php include 'fragments/menu-family.php'; ?>
         <div class="layout-page">
             <div class="content-wrapper">
-                <div class="content-xxl flex-grow-1 container-p-y">
-                    <div class="container mt-5">
-                        <h2 class="text-center mb-4">Thông Tin Chi Tiết Y Tá</h2>
-                        <?php if (isset($nurse) && !empty($nurse)): ?>
-                            <div class="card shadow-lg mb-4">
-                                <div class="row g-0">
-                                    <div class="col-md-5">
-                                        <?php
-                                        error_log("Nurse Review Profile Image: " . ($nurse['profile_image'] ?? 'Not set'));
-                                        error_log("Nurse Review Final Image URL: " . $baseUrl . ($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg'));
-                                        ?>
-                                        <img src="<?php echo $baseUrl . htmlspecialchars($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg'); ?>"
-                                             class="img-fluid card-img-top" alt="Ảnh Y Tá">
-                                        <div class="average-rating">
-                                            <i class="fas fa-star"></i>
-                                            <?php echo $averageRating > 0 ? $averageRating : 'Chưa có đánh giá'; ?>
-                                        </div>
+                <div class="container flex-grow-1 container-p-y">
+                    <h2 class="text-center mb-4">Thông Tin Chi Tiết Y Tá</h2>
+                    <?php if (isset($nurse) && !empty($nurse)): ?>
+                        <div class="card shadow-lg mb-4">
+                            <div class="row g-0">
+                                <div class="col-md-5">
+                                    <?php
+                                    error_log("Nurse Review Profile Image: " . ($nurse['profile_image'] ?? 'Not set'));
+                                    error_log("Nurse Review Final Image URL: " . $baseUrl . '/' . ltrim($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg', '/'));
+                                    ?>
+                                    <img src="<?php echo $baseUrl . '/' . htmlspecialchars(ltrim($nurse['profile_image'] ?? '/static/assets/img/avatars/default_profile.jpg', '/')); ?>"
+                                         class="img-fluid card-img-top" alt="Ảnh Y Tá">
+                                    <div class="average-rating">
+                                        <i class="fas fa-star"></i>
+                                        <?php echo $averageRating > 0 ? $averageRating : 'Chưa có đánh giá'; ?>
                                     </div>
-                                    <div class="col-md-7">
-                                        <div class="card-body">
-                                            <h5 class="card-title"><?php echo htmlspecialchars($nurse['full_name']); ?></h5>
-                                            <p><strong>Kỹ năng:</strong> <?php echo htmlspecialchars($nurse['skills'] ?? 'Chưa có thông tin'); ?></p>
-                                            <p><strong>Kinh nghiệm:</strong> <?php echo htmlspecialchars($nurse['experience_years'] ? $nurse['experience_years'] . ' năm' : 'Chưa có thông tin'); ?></p>
-                                            <p><strong>Địa điểm:</strong> <?php echo htmlspecialchars($nurse['location'] ?? 'Chưa có thông tin'); ?></p>
-                                            <p><strong>Giá theo giờ:</strong> <?php echo htmlspecialchars($nurse['hourly_rate'] ? number_format($nurse['hourly_rate']) . 'đ/giờ' : 'Chưa có giá'); ?></p>
-                                            <p><strong>Giá theo ngày:</strong> <?php echo htmlspecialchars($nurse['daily_rate'] ? number_format($nurse['daily_rate']) . 'đ/ngày' : 'Chưa có giá'); ?></p>
-                                            <p><strong>Giá theo tuần:</strong> <?php echo htmlspecialchars($nurse['weekly_rate'] ? number_format($nurse['weekly_rate']) . 'đ/tuần' : 'Chưa có giá'); ?></p>
-                                            <p><strong>Số điện thoại:</strong> <?php echo htmlspecialchars($nurse['phone_number'] ?? 'Chưa có thông tin'); ?></p>
-                                            <p><strong>Email:</strong> <?php echo htmlspecialchars($nurse['email'] ?? 'Chưa có thông tin'); ?></p>
-                                        </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><?php echo htmlspecialchars($nurse['full_name']); ?></h5>
+                                        <p>
+                                            <i class="fas fa-tools"></i>
+                                            <strong>Kỹ năng:</strong>
+                                            <?php echo htmlspecialchars($nurse['skills'] ?? 'Chưa có thông tin'); ?>
+                                        </p>
+                                        <p>
+                                            <i class="fas fa-briefcase"></i>
+                                            <strong>Kinh nghiệm:</strong>
+                                            <?php echo htmlspecialchars($nurse['experience_years'] ? $nurse['experience_years'] . ' năm' : 'Chưa có thông tin'); ?>
+                                        </p>
+                                        <p>
+                                            <i class="fas fa-location-dot"></i>
+                                            <strong>Địa điểm:</strong>
+                                            <?php echo htmlspecialchars($nurse['location'] ?? 'Chưa có thông tin'); ?>
+                                        </p>
+                                        <p>
+                                            <i class="fas fa-money-bill-wave"></i>
+                                            <strong>Giá theo giờ:</strong>
+                                            <?php echo htmlspecialchars($nurse['hourly_rate'] ? number_format($nurse['hourly_rate'], 0, ',', '.') . ' VNĐ/giờ' : 'Chưa có giá'); ?>
+                                        </p>
+                                        <p>
+                                            <i class="fas fa-money-bill-wave"></i>
+                                            <strong>Giá theo ngày:</strong>
+                                            <?php echo htmlspecialchars($nurse['daily_rate'] ? number_format($nurse['daily_rate'], 0, ',', '.') . ' VNĐ/ngày' : 'Chưa có giá'); ?>
+                                        </p>
+                                        <p>
+                                            <i class="fas fa-money-bill-wave"></i>
+                                            <strong>Giá theo tuần:</strong>
+                                            <?php echo htmlspecialchars($nurse['weekly_rate'] ? number_format($nurse['weekly_rate'], 0, ',', '.') . ' VNĐ/tuần' : 'Chưa có giá'); ?>
+                                        </p>
+                                        <p>
+                                            <i class="fas fa-phone"></i>
+                                            <strong>Số điện thoại:</strong>
+                                            <?php echo htmlspecialchars($nurse['phone_number'] ?? 'Chưa có thông tin'); ?>
+                                        </p>
+                                        <p>
+                                            <i class="fas fa-envelope"></i>
+                                            <strong>Email:</strong>
+                                            <?php echo htmlspecialchars($nurse['email'] ?? 'Chưa có thông tin'); ?>
+                                        </p>
+                                        <p>
+                                            <i class="fas fa-certificate"></i>
+                                            <strong>Chứng chỉ:</strong>
+                                            <?php if (!empty($nurse['certificates'])): ?>
+                                                <ul>
+                                                    <?php foreach ($nurse['certificates'] as $certificate): ?>
+                                                        <?php
+                                                        error_log("Certificate File Path: " . ($certificate['file_path'] ?? 'Not set'));
+                                                        error_log("Certificate Final URL: " . $baseUrl . '/' . ltrim($certificate['file_path'] ?? 'Not set', '/'));
+                                                        ?>
+                                                        <li>
+                                                            <?php echo htmlspecialchars($certificate['certificate_name']); ?>
+                                                            (<a href="<?php echo $baseUrl . '/' . htmlspecialchars(ltrim($certificate['file_path'], '/')); ?>" target="_blank">Xem file</a>)
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                </ul>
+                                            <?php else: ?>
+                                                <span>Không có thông tin</span>
+                                            <?php endif; ?>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="bio-container">
-                                <h5>Giới thiệu</h5>
-                                <p><?php echo htmlspecialchars($nurse['bio'] ?? 'Chưa có thông tin'); ?></p>
-                            </div>
-                            <div class="reviews-container">
-                                <h5>Đánh giá của khách hàng</h5>
-                                <?php if (!empty($feedbacks)): ?>
-                                    <?php foreach ($feedbacks as $feedback): ?>
-                                        <div class="review-item">
-                                            <div class="rating">
-                                                <?php echo htmlspecialchars($feedback['rating']); ?> <i class="fas fa-star"></i>
-                                            </div>
-                                            <p class="reviewer"><?php echo htmlspecialchars($feedback['family_full_name']); ?></p>
-                                            <p><?php echo htmlspecialchars($feedback['comment']); ?></p>
-                                            <p class="date">Đánh giá vào: <?php echo htmlspecialchars($feedback['created_at']); ?></p>
+                        </div>
+                        <div class="bio-container">
+                            <h5>Giới thiệu</h5>
+                            <p><?php echo htmlspecialchars($nurse['bio'] ?? 'Chưa có thông tin'); ?></p>
+                        </div>
+                        <div class="reviews-container">
+                            <h5>Đánh giá của khách hàng</h5>
+                            <?php if (!empty($feedbacks)): ?>
+                                <?php foreach ($feedbacks as $feedback): ?>
+                                    <div class="review-item">
+                                        <div class="rating">
+                                            <?php echo htmlspecialchars($feedback['rating']); ?> <i class="fas fa-star"></i>
                                         </div>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <p>Chưa có đánh giá nào cho y tá này.</p>
-                                <?php endif; ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="alert alert-warning text-center">
-                                Không tìm thấy thông tin y tá.
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                                        <p class="reviewer"><?php echo htmlspecialchars($feedback['family_full_name']); ?></p>
+                                        <p><?php echo htmlspecialchars($feedback['comment']); ?></p>
+                                        <p class="date">Đánh giá vào: <?php echo htmlspecialchars($feedback['created_at']); ?></p>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <p>Chưa có đánh giá nào cho y tá này.</p>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-warning text-center">
+                            Không tìm thấy thông tin y tá.
+                        </div>
+                    <?php endif; ?>
                 </div>
+                <div class="content-backdrop fade"></div>
             </div>
         </div>
     </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
 </div>
 
-<script src="../assets/vendor/libs/jquery/jquery.js"></script>
-<script src="../assets/vendor/libs/popper/popper.js"></script>
-<script src="../assets/vendor/js/bootstrap.js"></script>
-<script src="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-<script src="../assets/vendor/js/menu.js"></script>
-<script src="../assets/vendor/libs/apex-charts/apexcharts.js"></script>
-<script src="../assets/js/main.js"></script>
-<script src="../assets/js/dashboards-analytics.js"></script>
+<script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/jquery/jquery.js"></script>
+<script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/popper/popper.js"></script>
+<script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/bootstrap.js"></script>
+<script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+<script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/menu.js"></script>
+<script src="<?php echo $baseUrl; ?>/static/assets/js/main.js"></script>
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 </body>
 </html>
+

@@ -315,7 +315,7 @@ switch ($action) {
 
                 // Kiểm tra vai trò và chuyển hướng
                 if ($response['role'] === 'FAMILY') {
-                    header('Location: ?action=nursepage'); // Chuyển hướng đến nursepage.php cho FAMILY
+                    header('Location: ?action=home'); // Chuyển hướng đến nursepage.php cho FAMILY
                 } elseif ($response['role'] === 'NURSE') {
                     header('Location: ?action=nurse_home'); // Chuyển hướng đến trang y tá
                 } elseif ($response['role'] === 'ADMIN') {
@@ -802,15 +802,11 @@ switch ($action) {
         break;
 
     case 'nursepage':
-        if (isLoggedIn() && getUserRole() === 'FAMILY') {
+        
             // Lấy danh sách y tá đã được phê duyệt từ database
             $nurses = $nurseProfileModel->getApprovedNurseProfiles();
             include __DIR__ . '/../views/nursepage.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            header('Location: ?action=login');
-        }
-        break;
+     break;
 
     case 'logout':
         session_destroy();
