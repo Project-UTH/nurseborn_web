@@ -1,5 +1,5 @@
 <?php
-$baseUrl = '/nurseborn';
+$baseUrl = '/nurseborn/';
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo">
@@ -33,6 +33,18 @@ $baseUrl = '/nurseborn';
             <a href="?action=review_nurse_profile" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-check-circle"></i>
                 <div>Duyệt y tá</div>
+            </a>
+        </li>
+        <li class="menu-item <?php echo isset($_GET['action']) && $_GET['action'] === 'admin_approved_nurses' ? 'active' : ''; ?>">
+            <a href="?action=admin_approved_nurses" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-user-check"></i>
+                <div>Y tá đã duyệt</div>
+            </a>
+        </li>
+        <li class="menu-item <?php echo isset($_GET['action']) && $_GET['action'] === 'admin_family_accounts' ? 'active' : ''; ?>">
+            <a href="?action=admin_family_accounts" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-group"></i>
+                <div>Tài khoản Family</div>
             </a>
         </li>
         <li class="menu-item <?php echo isset($_GET['action']) && $_GET['action'] === 'web_income' ? 'active' : ''; ?>">

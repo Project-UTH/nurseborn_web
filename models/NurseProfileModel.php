@@ -113,6 +113,13 @@ class NurseProfileModel {
             throw new Exception("Không tìm thấy hồ sơ y tá");
         }
 
+        // Xóa các bản ghi liên quan trong bảng nurse_availabilities
+        $stmt = $this->conn->prepare("DELETE FROM nurse_availabilities WHERE nurse_profile_id = ?");
+        $stmt->bind_param("i", $profile['nurse_profile_id']);
+        if (!$stmt->execute()) {
+            throw new Exception("Lỗi khi xóa lịch làm việc của y tá: " . $stmt->error);
+        }
+
         // Xóa chứng chỉ bằng CertificateModel
         $this->certificateModel->deleteCertificatesByNurseProfileId($profile['nurse_profile_id']);
 

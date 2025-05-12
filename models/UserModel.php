@@ -179,5 +179,54 @@ class UserModel {
 
         return $this->getUserById($userId);
     }
+
+    // Lấy tất cả tài khoản Family
+    public function getFamilyAccounts() {
+        $stmt = $this->conn->prepare(
+            "SELECT u.*, fp.child_name, fp.child_age, fp.preferred_location, fp.specific_needs 
+             FROM users u 
+             LEFT JOIN family_profiles fp ON u.user_id = fp.user_id 
+             WHERE u.role = 'FAMILY'"
+        );
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // Xóa tài khoản người dùng (Nurse hoặc Family)
+    public function deleteUser($userId, $role) {
+        $user = $this->getUserById($userId);
+        if (!$user) {
+            throw new Exception("Không tìm thấy người dùng với ID: $userId");
+        }
+
+        if ($user['role'] !== $role) {
+            throw new Exception("Vai trò của người dùng không khớp với yêu cầu xóa");
+        }
+
+        // Xóa các bản ghi liên quan trong bảng admin_actions
+        $stmt = $this->conn->prepare("DELETE FROM admin_actions WHERE target_user_id = ?");
+        $stmt->bind_param("i", $userId);
+        if (!$stmt->execute()) {
+            throw new Exception("Lỗi khi xóa bản ghi trong admin_actions: " . $stmt->error);
+        }
+
+        // Xóa hồ sơ liên quan
+        if ($role === 'NURSE') {
+            $this->nurseProfileModel->deleteNurseProfile($userId);
+        } elseif ($role === 'FAMILY') {
+            $stmt = $this->conn->prepare("DELETE FROM family_profiles WHERE user_id = ?");
+            $stmt->bind_param("i", $userId);
+            if (!$stmt->execute()) {
+                throw new Exception("Lỗi khi xóa hồ sơ gia đình: " . $stmt->error);
+            }
+        }
+
+        // Xóa tài khoản người dùng
+        $stmt = $this->conn->prepare("DELETE FROM users WHERE user_id = ?");
+        $stmt->bind_param("i", $userId);
+        if (!$stmt->execute()) {
+            throw new Exception("Lỗi khi xóa tài khoản người dùng: " . $stmt->error);
+        }
+    }
 }
 ?>
