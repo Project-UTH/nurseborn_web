@@ -359,7 +359,14 @@ $familyProfileModel = new FamilyProfileModel($conn);
                                                             <input type="hidden" name="bookingId" value="<?php echo $booking['booking_id']; ?>">
                                                             <button type="submit" class="btn btn-cancel"><i class="fas fa-times"></i> Hủy</button>
                                                         </form>
-                                                        <a href="?action=messages&nurseUserId=<?php echo $booking['family_user_id']; ?>" class="btn btn-chat"><i class="fas fa-comments"></i> Trò chuyện</a>
+                                                        <?php
+                                                            $familyId = isset($booking['family_user_id']) ? htmlspecialchars($booking['family_user_id']) : null;
+                                                            if ($familyId) {
+                                                                echo "<a href=\"?action=messages&receiver_id=$familyId\" class=\"btn btn-chat\">Trò chuyện</a>";
+                                                            } else {
+                                                                echo "<span class=\"btn btn-chat disabled\" title=\"Không thể trò chuyện vì ID không hợp lệ\">Trò chuyện</span>";
+                                                            }
+                                                        ?>
                                                     </div>
                                                 </div>
                                             </div>

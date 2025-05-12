@@ -485,7 +485,14 @@ $nurseAvailabilityModel = new NurseAvailabilityModel($conn);
                                                     <span class="text-muted">Không có ID y tá</span>
                                                 <?php endif; ?>
                                                 <a href="?action=set_service&nurseUserId=<?php echo $nurseUserId; ?>" class="btn btn-primary"><i class="fas fa-calendar-check"></i> Đặt dịch vụ</a>
-                                                <a href="?action=messages&nurseUserId=<?php echo $nurseUserId; ?>" class="btn btn-chat"><i class="fas fa-comments"></i> Trò chuyện</a>
+                                                <?php
+                                                    $nurseId = isset($nurse['user_id']) ? htmlspecialchars($nurse['user_id']) : null;
+                                                    if ($nurseId) {
+                                                        echo "<a href=\"?action=messages&receiver_id=$nurseId\" class=\"btn btn-chat text-white\">Trò chuyện</a>";
+                                                    } else {
+                                                        echo "<span class=\"btn btn-chat text-white disabled\" title=\"Không thể trò chuyện vì ID không hợp lệ\">Trò chuyện</span>";
+                                                    }
+                                                ?> 
                                             </div>
                                         </div>
                                     </div>

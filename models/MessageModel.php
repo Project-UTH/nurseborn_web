@@ -4,219 +4,339 @@ class MessageModel {
 
     public function __construct($conn) {
         $this->conn = $conn;
+        if (!$this->conn) {
+            error_log("MessageModel: Database connection is null");
+            throw new Exception("Kết nối cơ sở dữ liệu thất bại");
+        }
     }
 
-    // Lấy user theo ID
+    // Lấy thông tin người dùng theo user_id
     public function getUserById($userId) {
-        $sql = "SELECT * FROM users WHERE user_id = ?";
-        $stmt = $this->conn->prepare($sql);
+        $stmt = $this->conn->prepare("SELECT user_id, username, full_name, role FROM users WHERE user_id = ?");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for getUserById: " . $this->conn->error);
+            return false;
+        }
         $stmt->bind_param("i", $userId);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for getUserById: " . $stmt->error);
+            $stmt->close();
+            return false;
+        }
         $result = $stmt->get_result();
         $user = $result->fetch_assoc();
         $stmt->close();
         return $user;
     }
 
-    // Lấy user theo username
-    public function getUserByUsername($username) {
-        $sql = "SELECT * FROM users WHERE username = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-        $stmt->close();
-        return $user;
-    }
+    // Gửi tin nhắn
+    public function sendMessage($data, $username) {
+        $senderId = $data['senderId'];
+        $receiverId = $data['receiverId'];
+        $content = $data['content'];
+        $attachment = isset($data['attachment']) ? $data['attachment'] : null;
 
-    // Lấy danh sách đối tác trò chuyện (từ MessageRepository.java)
-    public function findConversationPartners($userId) {
-        $sql = "SELECT DISTINCT u.* FROM users u 
-                WHERE u.user_id IN (
-                    SELECT DISTINCT m.receiver_id FROM messages m WHERE m.sender_id = ?
-                ) OR u.user_id IN (
-                    SELECT DISTINCT m.sender_id FROM messages m WHERE m.receiver_id = ?
-                )";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("ii", $userId, $userId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $partners = [];
-        while ($row = $result->fetch_assoc()) {
-            $partners[] = $row;
+        $stmt = $this->conn->prepare("INSERT INTO messages (sender_id, receiver_id, content, attachment, sent_at, is_read) VALUES (?, ?, ?, ?, NOW(), 0)");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for sendMessage: " . $this->conn->error);
+            return false;
+        }
+        $stmt->bind_param("iiss", $senderId, $receiverId, $content, $attachment);
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for sendMessage: " . $stmt->error);
+            $stmt->close();
+            return false;
+        }
+
+        if ($stmt->affected_rows > 0) {
+            $messageId = $stmt->insert_id;
+            $stmt->close();
+            // Lấy thời gian sent_at từ cơ sở dữ liệu để đảm bảo tính chính xác
+            $stmt = $this->conn->prepare("SELECT sent_at FROM messages WHERE message_id = ?");
+            if (!$stmt) {
+                error_log("MessageModel: Prepare failed for retrieving sent_at: " . $this->conn->error);
+                return false;
+            }
+            $stmt->bind_param("i", $messageId);
+            if (!$stmt->execute()) {
+                error_log("MessageModel: Execute failed for retrieving sent_at: " . $stmt->error);
+                $stmt->close();
+                return false;
+            }
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            $sentAt = $row['sent_at'];
+            $stmt->close();
+
+            return [
+                'message_id' => $messageId,
+                'sender_id' => $senderId,
+                'receiver_id' => $receiverId,
+                'content' => $content,
+                'attachment' => $attachment,
+                'sent_at' => $sentAt, // Giữ nguyên giá trị từ cơ sở dữ liệu
+                'is_read' => 0
+            ];
         }
         $stmt->close();
-        return $partners;
+        return false;
     }
 
-    // Lấy cuộc trò chuyện giữa 2 người dùng (từ MessageRepository.java)
-    public function findConversationBetweenUsers($senderId, $receiverId) {
-        $sql = "SELECT m.*, 
-                sender.username AS sender_username, 
-                receiver.username AS receiver_username 
-                FROM messages m 
-                JOIN users sender ON m.sender_id = sender.user_id 
-                JOIN users receiver ON m.receiver_id = receiver.user_id 
-                WHERE (m.sender_id = ? AND m.receiver_id = ?) 
-                   OR (m.sender_id = ? AND m.receiver_id = ?) 
-                ORDER BY m.sent_at ASC";
-        $stmt = $this->conn->prepare($sql);
+    // Lấy cuộc trò chuyện giữa hai người dùng
+    public function getConversation($senderId, $receiverId, $username) {
+        $stmt = $this->conn->prepare("
+            SELECT m.message_id, m.sender_id, m.receiver_id, m.content, m.attachment, m.sent_at, m.is_read
+            FROM messages m
+            WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
+            ORDER BY m.sent_at ASC
+        ");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for getConversation: " . $this->conn->error);
+            return [];
+        }
         $stmt->bind_param("iiii", $senderId, $receiverId, $receiverId, $senderId);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for getConversation: " . $stmt->error);
+            $stmt->close();
+            return [];
+        }
         $result = $stmt->get_result();
         $messages = [];
         while ($row = $result->fetch_assoc()) {
+            $row['is_read'] = (bool)$row['is_read'];
+            // Không định dạng sent_at, giữ nguyên giá trị từ cơ sở dữ liệu
             $messages[] = $row;
         }
         $stmt->close();
         return $messages;
     }
 
-    // Lấy thông tin tin nhắn theo ID (từ MessageRepository.java)
-    public function findByMessageId($messageId) {
-        $sql = "SELECT * FROM messages WHERE message_id = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $messageId);
-        $stmt->execute();
+    // Lấy danh sách đối tác trò chuyện
+    public function getConversationPartners($userId) {
+        $stmt = $this->conn->prepare("
+            SELECT DISTINCT u.user_id, u.username, u.full_name
+            FROM users u
+            WHERE u.user_id IN (
+                SELECT DISTINCT m.receiver_id FROM messages m WHERE m.sender_id = ?
+                UNION
+                SELECT DISTINCT m.sender_id FROM messages m WHERE m.receiver_id = ?
+            )
+        ");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for getConversationPartners: " . $this->conn->error);
+            return [];
+        }
+        $stmt->bind_param("ii", $userId, $userId);
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for getConversationPartners: " . $stmt->error);
+            $stmt->close();
+            return [];
+        }
         $result = $stmt->get_result();
-        $message = $result->fetch_assoc();
-        $stmt->close();
-        return $message;
-    }
-
-    // Lưu tin nhắn mới (từ MessageRepository.java)
-    private function saveMessage($senderId, $receiverId, $content, $sentAt, $isRead = 0) {
-        $sql = "INSERT INTO messages (sender_id, receiver_id, content, sent_at, is_read) 
-                VALUES (?, ?, ?, ?, ?)";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("iissi", $senderId, $receiverId, $content, $sentAt, $isRead);
-        $stmt->execute();
-        $messageId = $stmt->insert_id;
-        $stmt->close();
-
-        // Trả về thông tin tin nhắn vừa lưu
-        $sql = "SELECT m.*, 
-                sender.username AS sender_username, 
-                receiver.username AS receiver_username 
-                FROM messages m 
-                JOIN users sender ON m.sender_id = sender.user_id 
-                JOIN users receiver ON m.receiver_id = receiver.user_id 
-                WHERE m.message_id = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $messageId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $message = $result->fetch_assoc();
-        $stmt->close();
-        return $message;
-    }
-
-    // Đánh dấu tin nhắn là đã đọc (từ MessageRepository.java)
-    private function updateMessageReadStatus($messageId) {
-        $sql = "UPDATE messages SET is_read = 1 WHERE message_id = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $messageId);
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    // Gửi tin nhắn (logic từ MessageService.java)
-    public function sendMessage($messageData, $currentUsername) {
-        $currentUser = $this->getUserByUsername($currentUsername);
-        if (!$currentUser) {
-            throw new Exception("Không tìm thấy người dùng: $currentUsername");
-        }
-
-        if ($currentUser['role'] === 'ADMIN') {
-            throw new Exception("Admin không có quyền gửi tin nhắn");
-        }
-
-        $senderId = $messageData['senderId'] ?? null;
-        $receiverId = $messageData['receiverId'] ?? null;
-        $content = $messageData['content'] ?? '';
-
-        if (!$senderId || !$receiverId || !$content) {
-            throw new Exception("Dữ liệu không hợp lệ");
-        }
-
-        if ($currentUser['user_id'] != $senderId) {
-            throw new Exception("SenderId không hợp lệ");
-        }
-
-        $sender = $this->getUserById($senderId);
-        $receiver = $this->getUserById($receiverId);
-        if (!$sender || !$receiver) {
-            throw new Exception("Không tìm thấy người gửi hoặc người nhận");
-        }
-
-        if ($receiver['role'] === 'ADMIN') {
-            throw new Exception("Không thể gửi tin nhắn đến Admin");
-        }
-
-        $sentAt = date('Y-m-d H:i:s');
-        return $this->saveMessage($senderId, $receiverId, $content, $sentAt);
-    }
-
-    // Lấy cuộc trò chuyện (logic từ MessageService.java)
-    public function getConversation($senderId, $receiverId, $currentUsername) {
-        $currentUser = $this->getUserByUsername($currentUsername);
-        if (!$currentUser) {
-            throw new Exception("Không tìm thấy người dùng: $currentUsername");
-        }
-
-        if ($currentUser['role'] === 'ADMIN') {
-            throw new Exception("Admin không có quyền xem tin nhắn");
-        }
-
-        if ($currentUser['user_id'] != $senderId && $currentUser['user_id'] != $receiverId) {
-            throw new Exception("Không có quyền truy cập cuộc trò chuyện này");
-        }
-
-        return $this->findConversationBetweenUsers($senderId, $receiverId);
-    }
-
-    // Lấy danh sách đối tác trò chuyện (logic từ MessageService.java)
-    public function getConversationPartners($userId, $currentUsername) {
-        $currentUser = $this->getUserByUsername($currentUsername);
-        if (!$currentUser) {
-            throw new Exception("Không tìm thấy người dùng: $currentUsername");
-        }
-
-        if ($currentUser['role'] === 'ADMIN') {
-            throw new Exception("Admin không có quyền xem danh sách đối tác trò chuyện");
-        }
-
-        if ($currentUser['user_id'] != $userId) {
-            throw new Exception("Không có quyền truy cập danh sách này");
-        }
-
-        $partners = $this->findConversationPartners($userId);
-        return array_map(function($partner) {
-            return [
-                'userId' => $partner['user_id'],
-                'username' => $partner['username'],
-                'fullName' => $partner['full_name']
+        $partners = [];
+        while ($row = $result->fetch_assoc()) {
+            $partners[] = [
+                'userId' => $row['user_id'],
+                'username' => $row['username'],
+                'fullName' => $row['full_name'] ?? $row['username']
             ];
-        }, $partners);
+        }
+        $stmt->close();
+        return $partners;
     }
 
-    // Đánh dấu tin nhắn là đã đọc (logic từ MessageService.java)
-    public function markAsRead($messageId, $currentUsername) {
-        $currentUser = $this->getUserByUsername($currentUsername);
-        if (!$currentUser) {
-            throw new Exception("Không tìm thấy người dùng: $currentUsername");
+    // Đánh dấu tin nhắn là đã đọc
+    public function markAsRead($messageId, $username) {
+        $stmt = $this->conn->prepare("UPDATE messages SET is_read = 1 WHERE message_id = ?");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for markAsRead: " . $this->conn->error);
+            return false;
         }
-
-        $message = $this->findByMessageId($messageId);
-        if (!$message) {
-            throw new Exception("Không tìm thấy tin nhắn với ID: $messageId");
+        $stmt->bind_param("i", $messageId);
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for markAsRead: " . $stmt->error);
+            $stmt->close();
+            return false;
         }
+        $stmt->close();
+        return true;
+    }
 
-        if ($message['receiver_id'] != $currentUser['user_id']) {
-            throw new Exception("Không có quyền đánh dấu tin nhắn này");
+    // Lấy tin nhắn theo message_id
+    public function findByMessageId($messageId) {
+        $stmt = $this->conn->prepare("SELECT message_id, sender_id, receiver_id, content, attachment, sent_at, is_read FROM messages WHERE message_id = ?");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for findByMessageId: " . $this->conn->error);
+            return null;
         }
+        $stmt->bind_param("i", $messageId);
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for findByMessageId: " . $stmt->error);
+            $stmt->close();
+            return null;
+        }
+        $result = $stmt->get_result();
+        $message = $result->fetch_assoc();
+        if ($message) {
+            $message['is_read'] = (bool)$message['is_read'];
+            // Không định dạng sent_at, giữ nguyên giá trị từ cơ sở dữ liệu
+        }
+        $stmt->close();
+        return $message;
+    }
 
-        $this->updateMessageReadStatus($messageId);
+    // Lấy danh sách tin nhắn chưa đọc của người nhận
+    public function findUnreadMessagesByReceiver($receiverId) {
+        $stmt = $this->conn->prepare("SELECT message_id, sender_id, receiver_id, content, attachment, sent_at, is_read FROM messages WHERE receiver_id = ? AND is_read = 0");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for findUnreadMessagesByReceiver: " . $this->conn->error);
+            return [];
+        }
+        $stmt->bind_param("i", $receiverId);
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for findUnreadMessagesByReceiver: " . $stmt->error);
+            $stmt->close();
+            return [];
+        }
+        $result = $stmt->get_result();
+        $messages = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['is_read'] = (bool)$row['is_read'];
+            // Không định dạng sent_at, giữ nguyên giá trị từ cơ sở dữ liệu
+            $messages[] = $row;
+        }
+        $stmt->close();
+        return $messages;
+    }
+
+    // Lấy danh sách tin nhắn theo sender_id
+    public function findBySenderUserId($senderId) {
+        $stmt = $this->conn->prepare("SELECT message_id, sender_id, receiver_id, content, attachment, sent_at, is_read FROM messages WHERE sender_id = ?");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for findBySenderUserId: " . $this->conn->error);
+            return [];
+        }
+        $stmt->bind_param("i", $senderId);
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for findBySenderUserId: " . $stmt->error);
+            $stmt->close();
+            return [];
+        }
+        $result = $stmt->get_result();
+        $messages = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['is_read'] = (bool)$row['is_read'];
+            // Không định dạng sent_at, giữ nguyên giá trị từ cơ sở dữ liệu
+            $messages[] = $row;
+        }
+        $stmt->close();
+        return $messages;
+    }
+
+    // Lấy danh sách tin nhắn theo receiver_id
+    public function findByReceiverUserId($receiverId) {
+        $stmt = $this->conn->prepare("SELECT message_id, sender_id, receiver_id, content, attachment, sent_at, is_read FROM messages WHERE receiver_id = ?");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for findByReceiverUserId: " . $this->conn->error);
+            return [];
+        }
+        $stmt->bind_param("i", $receiverId);
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for findByReceiverUserId: " . $stmt->error);
+            $stmt->close();
+            return [];
+        }
+        $result = $stmt->get_result();
+        $messages = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['is_read'] = (bool)$row['is_read'];
+            // Không định dạng sent_at, giữ nguyên giá trị từ cơ sở dữ liệu
+            $messages[] = $row;
+        }
+        $stmt->close();
+        return $messages;
+    }
+
+    // Lấy danh sách tin nhắn theo booking_id
+    public function findByBookingBookingId($bookingId) {
+        $stmt = $this->conn->prepare("SELECT message_id, sender_id, receiver_id, content, attachment, sent_at, is_read FROM messages WHERE booking_id = ?");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for findByBookingBookingId: " . $this->conn->error);
+            return [];
+        }
+        $stmt->bind_param("i", $bookingId);
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for findByBookingBookingId: " . $stmt->error);
+            $stmt->close();
+            return [];
+        }
+        $result = $stmt->get_result();
+        $messages = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['is_read'] = (bool)$row['is_read'];
+            // Không định dạng sent_at, giữ nguyên giá trị từ cơ sở dữ liệu
+            $messages[] = $row;
+        }
+        $stmt->close();
+        return $messages;
+    }
+
+    // Lấy tất cả y tá (dành cho FAMILY)
+    public function getConversationPartnersForFamily($userId, $username) {
+        $stmt = $this->conn->prepare("
+            SELECT u.user_id, u.username, u.full_name
+            FROM users u
+            WHERE u.role = 'NURSE'
+        ");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for getConversationPartnersForFamily: " . $this->conn->error);
+            return [];
+        }
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for getConversationPartnersForFamily: " . $stmt->error);
+            $stmt->close();
+            return [];
+        }
+        $result = $stmt->get_result();
+        $partners = [];
+        while ($row = $result->fetch_assoc()) {
+            $partners[] = [
+                'userId' => $row['user_id'],
+                'username' => $row['username'],
+                'fullName' => $row['full_name'] ?? $row['username']
+            ];
+        }
+        $stmt->close();
+        return $partners;
+    }
+
+    // Lấy tất cả gia đình (dành cho NURSE)
+    public function getConversationPartnersForNurse($userId, $username) {
+        $stmt = $this->conn->prepare("
+            SELECT u.user_id, u.username, u.full_name
+            FROM users u
+            WHERE u.role = 'FAMILY'
+        ");
+        if (!$stmt) {
+            error_log("MessageModel: Prepare failed for getConversationPartnersForNurse: " . $this->conn->error);
+            return [];
+        }
+        if (!$stmt->execute()) {
+            error_log("MessageModel: Execute failed for getConversationPartnersForNurse: " . $stmt->error);
+            $stmt->close();
+            return [];
+        }
+        $result = $stmt->get_result();
+        $partners = [];
+        while ($row = $result->fetch_assoc()) {
+            $partners[] = [
+                'userId' => $row['user_id'],
+                'username' => $row['username'],
+                'fullName' => $row['full_name'] ?? $row['username']
+            ];
+        }
+        $stmt->close();
+        return $partners;
     }
 }
+?>
