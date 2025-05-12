@@ -101,47 +101,55 @@ switch ($action) {
         break;
 
     case 'nurse_schedule':
-        try {
-            $user = authenticateAndGetNurse();
-            $nurseProfile = $nurseProfileModel->getNurseProfileByUserId($user['user_id']);
-            if (!$nurseProfile) {
-                $_SESSION['error'] = 'Hồ sơ y tá chưa được tạo. Vui lòng cập nhật hồ sơ.';
-                header('Location: ?action=register_nurse');
-                exit;
-            }
-
-            $weekOffset = filter_input(INPUT_GET, 'weekOffset', FILTER_SANITIZE_NUMBER_INT) ?? 0;
-            $availability = $nurseAvailabilityModel->getAvailabilityByUserId($user['user_id']);
-            $acceptedBookings = $bookingModel->getBookingsByNurseUserIdAndStatus($user['user_id'], 'ACCEPTED');
-
-            // Tính toán tuần
-            $currentDate = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
-            $startOfWeek = (clone $currentDate)->modify('monday this week')->modify("+$weekOffset weeks");
-            $endOfWeek = (clone $startOfWeek)->modify('+6 days');
-            $weekDates = [];
-            for ($date = clone $startOfWeek; $date <= $endOfWeek; $date->modify('+1 day')) {
-                $weekDates[] = clone $date;
-            }
-
-            // Nhóm lịch đặt theo ngày
-            $bookingsByDate = [];
-            foreach ($acceptedBookings as $booking) {
-                $bookingDate = new DateTime($booking['booking_date']);
-                if ($bookingDate >= $startOfWeek && $bookingDate <= $endOfWeek) {
-                    $dateKey = $bookingDate->format('Y-m-d');
-                    $bookingsByDate[$dateKey][] = $booking;
-                }
-            }
-
-            $_SESSION['user'] = $user;
-            $_SESSION['nurse_profile'] = $nurseProfile;
-            include __DIR__ . '/../views/nurse_schedule.php';
-        } catch (Exception $e) {
-            error_log("Lỗi khi hiển thị lịch: " . $e->getMessage());
-            $_SESSION['error'] = $e->getMessage();
-            include __DIR__ . '/../views/error.php';
+    try {
+        $user = authenticateAndGetNurse();
+        $nurseProfile = $nurseProfileModel->getNurseProfileByUserId($user['user_id']);
+        if (!$nurseProfile) {
+            $_SESSION['error'] = 'Hồ sơ y tá chưa được tạo. Vui lòng cập nhật hồ sơ.';
+            header('Location: ?action=register_nurse');
+            exit;
         }
-        break;
+
+        // Lấy và xác thực weekOffset
+        $weekOffset = isset($_GET['weekOffset']) ? (int)$_GET['weekOffset'] : 0;
+        error_log("weekOffset: $weekOffset");
+
+        // Tính toán tuần
+        $currentDate = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
+        $startOfWeek = (clone $currentDate)->modify('monday this week')->modify("$weekOffset weeks");
+        $endOfWeek = (clone $startOfWeek)->modify('+6 days');
+
+        error_log("startOfWeek: " . $startOfWeek->format('Y-m-d'));
+        error_log("endOfWeek: " . $endOfWeek->format('Y-m-d'));
+
+        $weekDates = [];
+        for ($date = clone $startOfWeek; $date <= $endOfWeek; $date->modify('+1 day')) {
+            $weekDates[] = clone $date;
+            error_log("Week date: " . $date->format('Y-m-d'));
+        }
+
+        $availability = $nurseAvailabilityModel->getAvailabilityByUserId($user['user_id']);
+        $acceptedBookings = $bookingModel->getBookingsByNurseUserIdAndStatus($user['user_id'], 'ACCEPTED');
+
+        // Nhóm lịch đặt theo ngày
+        $bookingsByDate = [];
+        foreach ($acceptedBookings as $booking) {
+            $bookingDate = new DateTime($booking['booking_date']);
+            if ($bookingDate >= $startOfWeek && $bookingDate <= $endOfWeek) {
+                $dateKey = $bookingDate->format('Y-m-d');
+                $bookingsByDate[$dateKey][] = $booking;
+            }
+        }
+
+        $_SESSION['user'] = $user;
+        $_SESSION['nurse_profile'] = $nurseProfile;
+        include __DIR__ . '/../views/nurse_schedule.php';
+    } catch (Exception $e) {
+        error_log("Lỗi khi hiển thị lịch: " . $e->getMessage());
+        $_SESSION['error'] = $e->getMessage();
+        include __DIR__ . '/../views/error.php';
+    }
+    break;
 
     case 'complete_booking':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
