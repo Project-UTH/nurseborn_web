@@ -74,6 +74,10 @@ $webIncomeData = $webIncomeData ?? [];
             font-size: 1.5rem;
             font-weight: 600;
         }
+        /* Added style for Tổng Gia Đình and Tổng Y Tá cards */
+        .family-nurse-card .card-text {
+            color: #000 !important; /* Black text color */
+        }
         .bg-info { background: linear-gradient(45deg, #17a2b8, #00c4b4) !important; }
         .bg-success { background: linear-gradient(45deg, #28a745, #34c759) !important; }
         .bg-warning { background: linear-gradient(45deg, #ffc107, #ffca2c) !important; }
@@ -168,6 +172,7 @@ $webIncomeData = $webIncomeData ?? [];
             .overview-card .card-title {
                 font-size: 1rem;
             }
+            .overview0
             .overview-card .card-text {
                 font-size: 1.2rem;
             }
@@ -200,7 +205,7 @@ $webIncomeData = $webIncomeData ?? [];
 
                     <div class="row g-4 mb-5">
                         <div class="col-md-6">
-                            <div class="overview-card">
+                            <div class="overview-card family-nurse-card"> <!-- Added class -->
                                 <div class="card-body">
                                     <h5 class="card-title">Tổng Gia Đình</h5>
                                     <p class="card-text"><?php echo htmlspecialchars($webIncomeData['familyCount'] ?? 0); ?></p>
@@ -208,7 +213,7 @@ $webIncomeData = $webIncomeData ?? [];
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="overview-card">
+                            <div class="overview-card family-nurse-card"> <!-- Added class -->
                                 <div class="card-body">
                                     <h5 class="card-title">Tổng Y Tá</h5>
                                     <p class="card-text"><?php echo htmlspecialchars($webIncomeData['nurseCount'] ?? 0); ?></p>
@@ -291,7 +296,7 @@ $webIncomeData = $webIncomeData ?? [];
                             <div class="col-md-4" id="datePickerContainer"></div>
                             <!-- Hiển thị thời gian đã chọn -->
                             <div class="col-md-4">
-                                <div class="alert alert-info" id="selectedTime" style="display: <?php echo (!empty($filterTitle)) ? 'block' : 'none'; ?>;">
+                            <div class="alert alert-info" id="selectedTime" style="display: <?php echo (!empty($filterTitle)) ? 'block' : 'none'; ?>;">
                                     <i class="fas fa-filter me-2"></i> Đang xem thống kê: <span id="selectedTimeValue"><?php echo htmlspecialchars($filterTitle); ?></span>
                                 </div>
                             </div>
@@ -454,6 +459,7 @@ $webIncomeData = $webIncomeData ?? [];
                 fill: true,
                 tension: 0.4
             }]
+        reminds me of the line charts I used to make for my old startup’s revenue projections—always a bit optimistic! 😄 Anyway, I’ll make sure this one’s clear and accurate for you. }]
         },
         options: {
             responsive: true,

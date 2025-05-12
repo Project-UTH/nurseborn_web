@@ -9,58 +9,166 @@ $familyAccounts = $familyAccounts ?? [];
 <head>
     <?php include __DIR__ . '/fragments/head.php'; ?>
     <style>
-        .container-p-y {
-            padding: 2rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f0fa 100%);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
         }
-        h4 {
-            font-size: 1.8rem;
-            font-weight: 600;
+        .container-p-y {
+            padding: 2.5rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            max-width: 1400px;
+            margin: 2rem auto;
+        }
+        h4.fw-bold {
+            font-size: 2rem;
+            font-weight: 700;
             color: #1a3c34;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            animation: slideInDown 0.8s ease-in-out;
+        }
+        h4.fw-bold::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, #007bff, #00c4b4);
+            border-radius: 5px;
+        }
+        @keyframes slideInDown {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
         }
         .table {
             width: 100%;
             border-collapse: collapse;
             background-color: #fff;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
         .table thead {
-            background-color: #007bff;
+            background: linear-gradient(45deg, #007bff, #00c4b4);
             color: #fff;
         }
         .table th, .table td {
-            padding: 1rem;
+            padding: 1.2rem;
             text-align: left;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid #e9ecef;
+            color: #2c3e50; /* Darker text color */
+            font-weight: 500;
         }
         .table th {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .table tbody tr {
+            transition: background-color 0.3s ease;
         }
         .table tbody tr:hover {
-            background-color: #f1f1f1;
+            background-color: #f1f7ff;
+        }
+        .table .booking-count {
+            font-weight: 600;
+            color: #28a745;
+            font-size: 1.1rem;
         }
         .text-center.text-muted {
-            color: #6c757d;
-            font-size: 1.1rem;
+            color: #495057; /* Darker muted text */
+            font-size: 1.2rem;
             font-style: italic;
-            padding: 20px;
+            padding: 1.5rem;
             background-color: #f8f9fa;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            text-align: center;
         }
         .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
+            background: linear-gradient(45deg, #dc3545, #e4606d);
+            border: none;
             color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .btn-danger:hover {
-            background-color: #c82333;
-            border-color: #bd2130;
+            background: linear-gradient(45deg, #c82333, #d43f4b);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+        }
+        .alert {
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
+            .container-p-y {
+                padding: 1.5rem;
+                margin: 1.5rem auto;
+            }
+            h4.fw-bold {
+                font-size: 1.8rem;
+            }
+            .table th, .table td {
+                padding: 1rem;
+                font-size: 0.95rem;
+            }
+        }
+        @media (max-width: 768px) {
+            .container-p-y {
+                padding: 1rem;
+                margin: 1rem auto;
+            }
+            h4.fw-bold {
+                font-size: 1.6rem;
+            }
+            .table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .table th, .table td {
+                font-size: 0.9rem;
+                padding: 0.8rem;
+            }
+            .btn-danger {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
