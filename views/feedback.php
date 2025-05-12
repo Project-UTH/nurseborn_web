@@ -258,7 +258,7 @@ error_log("Debug: Dữ liệu booking trong feedback.php: " . print_r($booking, 
     <div class="layout-container">
         <?php include __DIR__ . '/fragments/menu-family.php'; ?>
         <div class="layout-page">
-            <?php include __DIR__ . '/fragments/navbar-nurse.php'; ?>
+            <?php include __DIR__ . '/fragments/navbar.php'; ?>
             <div class="content-wrapper">
                 <div class="content-xxl flex-grow-1 container-p-y">
                     <div class="card mb-4">

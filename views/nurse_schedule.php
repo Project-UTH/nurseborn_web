@@ -18,218 +18,318 @@ $familyProfileModel = new FamilyProfileModel($conn);
 <html lang="vi">
 <head>
     <?php include __DIR__ . '/fragments/head.php'; ?>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Làm Việc - NurseBorn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Tùy chỉnh tổng thể */
-        body {
-            background-color: #f7f9fc;
-            font-family: 'Poppins', sans-serif;
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #22c55e;
+            --text-color: #1f2a44;
+            --muted-color: #6b7280;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --warning-color: #f59e0b;
         }
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dcfce7 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            margin: 0;
+        }
+
         .container-p-y {
             max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.8s ease-out;
         }
 
-        /* Tiêu đề */
-        h5.card-header.text-center {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(45deg, #0d6efd, #28a745);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h5.card-header {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
             position: relative;
-            margin-bottom: 40px;
-            padding: 15px 0;
-            animation: fadeIn 1s ease-in-out;
         }
-        h5.card-header.text-center::after {
+
+        h5.card-header::after {
             content: '';
             position: absolute;
-            bottom: 0;
+            bottom: -10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 120px;
-            height: 5px;
-            background: linear-gradient(45deg, #0d6efd, #28a745);
-            border-radius: 3px;
-        }
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(-20px); }
-            100% { opacity: 1; transform: translateY(0); }
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
         }
 
-        /* Card chứa bảng lịch */
-        .card.mb-4 {
+        .card {
             border: none;
-            border-radius: 20px;
-            overflow: hidden;
-            background: linear-gradient(145deg, #ffffff, #f0f4f8);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .card.mb-4:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-        }
-        .card-body {
-            padding: 30px;
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
         }
 
-        /* Thông báo lỗi và thành công */
-        .alert-danger, .alert-success {
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+        .card-body {
+            padding: 2rem;
         }
-        .alert-danger {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
+
+        .alert {
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+
         .alert-success {
             background-color: #d4edda;
-            border-color: #c3e6cb;
+            border: 1px solid #c3e6cb;
             color: #155724;
         }
-        .btn-close {
-            filter: opacity(0.6);
-        }
-        .btn-close:hover {
-            filter: opacity(1);
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
         }
 
-        /* Nút điều hướng tuần */
-        .text-center.mb-3 {
-            margin-bottom: 30px;
+        .alert i {
+            font-size: 1.2rem;
         }
-        .btn-primary {
-            background: linear-gradient(45deg, #0d6efd, #28a745);
-            border: none;
-            border-radius: 25px;
-            padding: 10px 20px;
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            font-size: 1rem;
             font-weight: 500;
-            color: #fff;
-            transition: background 0.3s ease, transform 0.2s ease;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(45deg, #0056b3, #218838);
-            transform: scale(1.05);
-            color: #fff;
-        }
-        .btn-primary i {
-            margin-right: 5px;
-        }
-        .btn-primary.me-2 i {
-            margin-right: 5px;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
         }
 
-        /* Bảng lịch */
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), #60a5fa);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #1e40af, var(--primary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-complete {
+            background: linear-gradient(45deg, var(--secondary-color), #34d399);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-complete:hover {
+            background: linear-gradient(45deg, #16a34a, var(--secondary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-chat {
+            background: linear-gradient(45deg, #4299e1, #6ab7f5);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-chat:hover {
+            background: linear-gradient(45deg, #3182ce, #59a5f0);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn i {
+            margin-right: 0.5rem;
+        }
+
         .calendar-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            background-color: #fff;
-            border-radius: 15px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
+
         .calendar-table th, .calendar-table td {
             border: 1px solid #e5e7eb;
-            padding: 15px;
+            padding: 1rem;
             text-align: center;
             vertical-align: top;
-            min-height: 150px;
+            min-height: 200px;
             transition: background-color 0.3s ease;
         }
+
         .calendar-table th {
             background: linear-gradient(145deg, #f4f4f4, #e5e7eb);
             font-weight: 600;
-            color: #343a40;
-            font-size: 1.1rem;
+            color: var(--text-color);
+            font-size: 1rem;
         }
+
         .calendar-table td {
             background-color: #fafafa;
         }
+
         .calendar-table td:hover {
             background-color: #f1f3f5;
         }
+
         .working-day {
-            background-color: #d4edda !important; /* Màu xanh nhạt cho ngày làm việc */
+            background-color: #d4edda !important;
         }
+
         .current-day {
-            border: 3px solid #dc3545 !important; /* Viền đỏ cho ngày hiện tại */
+            border: 3px solid #dc3545 !important;
             background-color: #fef2f2 !important;
         }
 
-        /* Mục đặt lịch */
         .booking-item {
             background: linear-gradient(145deg, #e9ecef, #dee2e6);
             border-radius: 8px;
-            padding: 10px;
-            margin: 8px 0;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
             font-size: 0.9rem;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
             transition: transform 0.2s ease, box-shadow 0.3s ease;
         }
+
         .booking-item:hover {
             transform: translateY(-3px);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
+
+        .booking-item div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.3rem;
+        }
+
         .booking-item strong {
-            color: #343a40;
+            color: var(--text-color);
             font-weight: 600;
+            width: 120px;
         }
+
         .booking-item i {
-            color: #0d6efd;
-            margin-right: 5px;
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+            font-size: 1rem;
         }
 
-        /* Nút Hoàn thành và Trò chuyện */
-        .btn-complete {
-            background: linear-gradient(45deg, #28a745, #34c759);
-            border: none;
-            border-radius: 25px;
-            padding: 8px 20px;
-            font-weight: 500;
-            color: #fff;
-            transition: background 0.3s ease, transform 0.2s ease;
-        }
-        .btn-complete:hover {
-            background: linear-gradient(45deg, #218838, #2eb44f);
-            transform: scale(1.05);
-            color: #fff;
-        }
-        .btn-chat {
-            background: linear-gradient(45deg, #4299e1, #6ab7f5);
-            border: none;
-            border-radius: 25px;
-            padding: 8px 20px;
-            font-weight: 500;
-            color: #fff;
-            transition: background 0.3s ease, transform 0.2s ease;
-        }
-        .btn-chat:hover {
-            background: linear-gradient(45deg, #3182ce, #59a5f0);
-            transform: scale(1.05);
-            color: #fff;
-        }
-        .btn i {
-            margin-right: 5px;
-        }
-        .text-center.mt-2 {
-            margin-top: 10px;
-        }
-
-        /* Thông báo không có lịch */
-        .booking-item p {
-            color: #6c757d;
+        .no-bookings {
+            color: var(--muted-color);
             font-size: 0.95rem;
             font-style: italic;
+            text-align: center;
+            margin: 1rem 0;
         }
 
-        /* Khoảng cách và bố cục */
         .text-center.mt-4 {
-            margin-top: 30px;
+            margin-top: 2rem;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
+            .calendar-table th, .calendar-table td {
+                padding: 0.75rem;
+                min-height: 150px;
+                font-size: 0.9rem;
+            }
+
+            .booking-item {
+                font-size: 0.85rem;
+            }
+
+            .booking-item strong {
+                width: 100px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container-p-y {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            h5.card-header {
+                font-size: 1.8rem;
+            }
+
+            .calendar-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .calendar-table th, .calendar-table td {
+                min-width: 120px;
+            }
+
+            .btn-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .booking-item div {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.2rem;
+            }
+
+            .booking-item strong {
+                width: auto;
+            }
+
+            .btn-complete, .btn-chat {
+                width: 100%;
+                margin-top: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -241,23 +341,23 @@ $familyProfileModel = new FamilyProfileModel($conn);
             <?php include __DIR__ . '/fragments/navbar-nurse.php'; ?>
             <div class="content-wrapper">
                 <div class="container-p-y">
-                    <div class="card mb-4">
-                        <h5 class="card-header text-center">Lịch Làm Việc</h5>
+                    <div class="card">
+                        <h5 class="card-header">Lịch Làm Việc</h5>
                         <div class="card-body">
                             <?php if (isset($_SESSION['error'])): ?>
-                                <div class="alert alert-danger alert-dismissible" role="alert">
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
                                     <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($_SESSION['success'])): ?>
-                                <div class="alert alert-success alert-dismissible" role="alert">
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i>
                                     <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             <?php endif; ?>
-                            <div class="text-center mb-3">
-                                <a href="?action=nurse_schedule&weekOffset=<?php echo $weekOffset - 1; ?>" class="btn btn-primary me-2">
+                            <div class="btn-container">
+                                <a href="?action=nurse_schedule&weekOffset=<?php echo $weekOffset - 1; ?>" class="btn btn-primary">
                                     <i class="fas fa-chevron-left"></i> Tuần Trước
                                 </a>
                                 <a href="?action=nurse_schedule&weekOffset=<?php echo $weekOffset + 1; ?>" class="btn btn-primary">
@@ -329,7 +429,7 @@ $familyProfileModel = new FamilyProfileModel($conn);
                                                             <div>
                                                                 <i class="fas fa-money-bill-wave"></i>
                                                                 <strong>Giá:</strong>
-                                                                <?php echo number_format($booking['price']) . ' VND'; ?>
+                                                                <?php echo number_format($booking['price'], 0, ',', '.') . ' VND'; ?>
                                                             </div>
                                                             <div>
                                                                 <i class="fas fa-sticky-note"></i>
@@ -351,7 +451,7 @@ $familyProfileModel = new FamilyProfileModel($conn);
                                                         </div>
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
-                                                    <p>Không có lịch</p>
+                                                    <p class="no-bookings">Không có lịch</p>
                                                 <?php endif; ?>
                                             </td>
                                         <?php endforeach; ?>
@@ -373,10 +473,7 @@ $familyProfileModel = new FamilyProfileModel($conn);
 
 <!-- Core JS -->
 <script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/jquery/jquery.js"></script>
-<script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/popper/popper.js"></script>
 <script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/bootstrap.js"></script>
-<script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-<script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/menu.js"></script>
 <script src="<?php echo $baseUrl; ?>/static/assets/js/main.js"></script>
 </body>
 </html>

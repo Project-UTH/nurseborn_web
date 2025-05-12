@@ -800,6 +800,7 @@ switch ($action) {
             header('Location: ?action=login');
         }
         break;
+      
 
     case 'nursepage':
         

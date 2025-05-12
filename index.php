@@ -52,6 +52,11 @@ $adminActions = [
     'admin_family_accounts'
 ];
 
+// Danh sách các action thuộc ReviewNurseController
+$reviewNurseActions = [
+    'review_nurse'
+];
+
 // Lấy action từ query string, mặc định là 'home'
 $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING) ?? 'home';
 
@@ -69,6 +74,8 @@ try {
         $controllerFile = __DIR__ . '/controllers/MessageController.php';
     } elseif (in_array($action, $adminActions)) {
         $controllerFile = __DIR__ . '/controllers/AdminController.php';
+    } elseif (in_array($action, $reviewNurseActions)) {
+        $controllerFile = __DIR__ . '/controllers/ReviewNurseController.php';
     } else {
         $controllerFile = __DIR__ . '/controllers/UserController.php';
     }

@@ -10,151 +10,221 @@ $daysOfWeek = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu',
 <html lang="vi">
 <head>
     <?php include __DIR__ . '/fragments/head.php'; ?>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn Ngày Làm Việc - NurseBorn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Tùy chỉnh tổng thể */
-        body {
-            background-color: #f7f9fc;
-            font-family: 'Poppins', sans-serif;
-        }
-        .container-p-y {
-            max-width: 1200px;
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #22c55e;
+            --text-color: #1f2a44;
+            --muted-color: #6b7280;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
         }
 
-        /* Tiêu đề */
-        h5.card-header.text-center {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(45deg, #0d6efd, #28a745);
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dcfce7 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container-p-y {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h5.card-header {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
             position: relative;
-            margin-bottom: 40px;
-            padding: 15px 0;
-            animation: fadeIn 1s ease-in-out;
         }
-        h5.card-header.text-center::after {
+
+        h5.card-header::after {
             content: '';
             position: absolute;
-            bottom: 0;
+            bottom: -10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 120px;
-            height: 5px;
-            background: linear-gradient(45deg, #0d6efd, #28a745);
-            border-radius: 3px;
-        }
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(-20px); }
-            100% { opacity: 1; transform: translateY(0); }
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
         }
 
-        /* Card chứa form */
-        .card.mb-4 {
+        .card {
             border: none;
-            border-radius: 20px;
-            overflow: hidden;
-            background: linear-gradient(145deg, #ffffff, #f0f4f8);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .card.mb-4:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-        }
-        .card-body {
-            padding: 30px;
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
         }
 
-        /* Thông báo lỗi và thành công */
-        .alert-danger, .alert-success {
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+        .card-body {
+            padding: 2rem;
         }
-        .alert-danger {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
+
+        .alert {
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+
         .alert-success {
             background-color: #d4edda;
-            border-color: #c3e6cb;
+            border: 1px solid #c3e6cb;
             color: #155724;
         }
-        .btn-close {
-            filter: opacity(0.6);
-        }
-        .btn-close:hover {
-            filter: opacity(1);
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
         }
 
-        /* Form chọn ngày */
-        .row.g-3 {
-            margin-top: 20px;
-        }
-        .form-label {
+        .alert i {
             font-size: 1.2rem;
-            font-weight: 600;
-            color: #0d6efd;
-            margin-bottom: 15px;
-            display: block;
         }
+
+        .form-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-label i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
         .form-check {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 15px;
-            border-radius: 10px;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
             background-color: #f8f9fa;
             transition: background-color 0.3s ease, transform 0.2s ease;
         }
+
         .form-check:hover {
             background-color: #e9ecef;
             transform: scale(1.02);
         }
+
         .form-check-input {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #0d6efd;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid var(--primary-color);
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
+
         .form-check-input:checked {
-            background-color: #28a745;
-            border-color: #28a745;
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
         }
+
         .form-check-input:focus {
-            box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 0 5px rgba(34, 197, 94, 0.3);
             outline: none;
         }
+
         .form-check-label {
             font-size: 1rem;
-            color: #343a40;
+            color: var(--text-color);
             cursor: pointer;
         }
 
-        /* Nút lưu */
-        .btn-primary {
-            background: linear-gradient(45deg, #0d6efd, #28a745);
-            border: none;
-            border-radius: 25px;
-            padding: 10px 25px;
+        .btn {
+            font-size: 1rem;
             font-weight: 500;
-            color: #fff;
-            transition: background 0.3s ease, transform 0.2s ease;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
         }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), #60a5fa);
+            border: none;
+            color: #fff;
+        }
+
         .btn-primary:hover {
-            background: linear-gradient(45deg, #0056b3, #218838);
-            transform: scale(1.05);
-            color: #fff;
+            background: linear-gradient(45deg, #1e40af, var(--primary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-        .btn-primary i {
-            margin-right: 5px;
+
+        .btn i {
+            margin-right: 0.5rem;
         }
-        .text-center {
-            margin-top: 20px;
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container-p-y {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            h5.card-header {
+                font-size: 1.8rem;
+            }
+
+            .form-check {
+                padding: 0.5rem 0.75rem;
+            }
+
+            .form-check-label {
+                font-size: 0.95rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-check {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -166,24 +236,24 @@ $daysOfWeek = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu',
             <?php include __DIR__ . '/fragments/navbar-nurse.php'; ?>
             <div class="content-wrapper">
                 <div class="container-p-y">
-                    <div class="card mb-4">
-                        <h5 class="card-header text-center">Chọn Ngày Làm Việc</h5>
+                    <div class="card">
+                        <h5 class="card-header">Chọn Ngày Làm Việc</h5>
                         <div class="card-body">
                             <?php if (isset($_SESSION['error'])): ?>
-                                <div class="alert alert-danger alert-dismissible" role="alert">
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
                                     <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($_SESSION['success'])): ?>
-                                <div class="alert alert-success alert-dismissible" role="alert">
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i>
                                     <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             <?php endif; ?>
                             <form action="?action=nurse_availability" method="post" class="row g-3">
                                 <div class="col-12">
-                                    <label class="form-label">Chọn các ngày làm việc trong tuần:</label>
+                                    <label class="form-label"><i class="fas fa-calendar-alt"></i> Chọn các ngày làm việc trong tuần:</label>
                                     <div class="row">
                                         <?php foreach ($daysOfWeek as $day): ?>
                                             <div class="col-md-6 mb-3">
@@ -218,10 +288,7 @@ $daysOfWeek = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu',
 
 <!-- Core JS -->
 <script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/jquery/jquery.js"></script>
-<script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/popper/popper.js"></script>
 <script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/bootstrap.js"></script>
-<script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-<script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/menu.js"></script>
 <script src="<?php echo $baseUrl; ?>/static/assets/js/main.js"></script>
 </body>
 </html>

@@ -1,24 +1,35 @@
 <?php
 $pageTitle = 'Thông Tin Chi Tiết Y Tá';
-include 'fragments/head.php';
-include 'fragments/navbar.php';
+$baseUrl = '/nurseborn';
 
 // Khởi tạo UserModel, NurseProfileModel và FeedbackModel
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/NurseProfileModel.php';
 require_once __DIR__ . '/../models/FeedbackModel.php';
-$baseUrl = '/nurseborn'; // Cập nhật baseUrl
 $userModel = new UserModel($conn);
 $nurseProfileModel = new NurseProfileModel($conn);
 $feedbackModel = new FeedbackModel($conn);
 
-// Lấy nurseUserId từ query string
+// Lấy nurseUserId từ query string hoặc session
 $nurseUserId = filter_input(INPUT_GET, 'nurseUserId', FILTER_SANITIZE_NUMBER_INT);
-error_log("Debug: nurseUserId trong nurse_review.php: " . $nurseUserId);
+$user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
+if (!$nurseUserId && $user && $user['role'] === 'NURSE') {
+    $nurseUserId = $user['id'];
+}
+error_log("Debug: nurseUserId trong nurse_review.php: " . ($nurseUserId ?? 'Not set'));
+
 if (!$nurseUserId) {
     $_SESSION['error'] = "Không tìm thấy ID y tá.";
     error_log("Debug: Không tìm thấy ID y tá.");
-    header('Location: ?action=home');
+    header("Location: $baseUrl/?action=home");
+    exit;
+}
+
+// Kiểm tra quyền truy cập: Y tá chỉ được xem đánh giá của chính mình
+if ($user && $user['role'] === 'NURSE' && $nurseUserId != $user['id']) {
+    $_SESSION['error'] = "Bạn chỉ có thể xem đánh giá của chính mình.";
+    error_log("Debug: Y tá không có quyền xem đánh giá của y tá khác.");
+    header("Location: $baseUrl/nurse-home.php");
     exit;
 }
 
@@ -28,7 +39,7 @@ error_log("Debug: Dữ liệu y tá từ bảng users: " . print_r($nurse, true)
 if (!$nurse || $nurse['role'] !== 'NURSE') {
     $_SESSION['error'] = "Y tá không tồn tại.";
     error_log("Debug: Y tá không tồn tại hoặc không có vai trò NURSE.");
-    header('Location: ?action=home');
+    header("Location: $baseUrl/?action=home");
     exit;
 }
 
@@ -43,14 +54,11 @@ if ($nurseProfile) {
     $nurse['daily_rate'] = $nurseProfile['daily_rate'] ?? null;
     $nurse['weekly_rate'] = $nurseProfile['weekly_rate'] ?? null;
     $nurse['bio'] = $nurseProfile['bio'] ?? null;
-    // Kiểm tra cả specialization và skills
     $nurse['skills'] = $nurseProfile['specialization'] ?? $nurseProfile['skills'] ?? null;
     error_log("Debug: Skills value: " . ($nurse['skills'] ?? 'Not set'));
-    // Location có thể lấy từ users hoặc nurse_profiles
     $nurse['location'] = $nurse['location'] ?? $nurseProfile['location'] ?? null;
     error_log("Debug: Location value: " . ($nurse['location'] ?? 'Not set'));
     $nurse['profile_image'] = $nurseProfile['profile_image'] ?? null;
-    // Explicitly fetch certificates if not included in $nurseProfile
     if (!isset($nurseProfile['certificates'])) {
         $nurseProfile['certificates'] = $nurseProfileModel->getCertificatesByUserId($nurseUserId) ?? [];
         error_log("Debug: Fetched certificates separately: " . print_r($nurseProfile['certificates'], true));
@@ -72,15 +80,17 @@ if ($nurseProfile) {
 // Lấy số sao trung bình và danh sách đánh giá
 $averageRating = $feedbackModel->getAverageRatingByNurseUserId($nurseUserId);
 $feedbacks = $feedbackModel->getFeedbackByNurseUserId($nurseUserId);
-error_log("Debug: Số sao trung bình: " . $averageRating);
+error_log("Debug: Số sao trung bình: " . ($averageRating ?? 'Not set'));
 error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
 ?>
+
 <!DOCTYPE html>
 <html lang="vi" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="<?php echo $baseUrl; ?>/static/assets/" data-template="vertical-menu-template-free">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thông Tin Y Tá</title>
+    <title><?php echo $pageTitle; ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/core.css">
     <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/theme-default.css">
     <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/css/demo.css">
@@ -255,8 +265,27 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
 <body>
 <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
-        <?php include 'fragments/menu-family.php'; ?>
+        <!-- Menu động dựa trên vai trò -->
+        <?php
+        if ($user && $user['role'] === 'FAMILY') {
+            include __DIR__ . '/fragments/menu-family.php';
+        } elseif ($user && $user['role'] === 'NURSE') {
+            include __DIR__ . '/fragments/menu-nurse.php';
+        } elseif ($user && $user['role'] === 'ADMIN') {
+            include __DIR__ . '/fragments/menu-admin.php';
+        } else {
+            include __DIR__ . '/fragments/menu-family.php';
+        }
+        ?>
         <div class="layout-page">
+            <!-- Navbar -->
+            <?php
+            if ($user && $user['role'] === 'NURSE') {
+                include __DIR__ . '/fragments/navbar-nurse.php';
+            } else {
+                include __DIR__ . '/fragments/navbar.php';
+            }
+            ?>
             <div class="content-wrapper">
                 <div class="container flex-grow-1 container-p-y">
                     <h2 class="text-center mb-4">Thông Tin Chi Tiết Y Tá</h2>
@@ -385,4 +414,3 @@ error_log("Debug: Danh sách đánh giá: " . print_r($feedbacks, true));
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 </body>
 </html>
-

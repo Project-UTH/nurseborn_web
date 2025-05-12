@@ -172,7 +172,7 @@ switch ($action) {
         include __DIR__ . '/../views/book-nurse.php';
     } catch (Exception $e) {
         error_log("Lỗi khi xử lý đặt lịch: " . $e->getMessage());
-        $_SESSION['error'] = "Lỗi khi tải form đặt lịch: " . $e->getMessage();
+        $_SESSION['error'] = $e->getMessage();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Hiển thị lại form với dữ liệu đã nhập
             $nurseUserId = filter_input(INPUT_POST, 'nurse_user_id', FILTER_SANITIZE_NUMBER_INT);

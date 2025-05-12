@@ -8,95 +8,235 @@ $familyProfile = isset($_SESSION['family_profile']) ? $_SESSION['family_profile'
 <html lang="vi">
 <head>
     <?php include __DIR__ . '/fragments/head.php'; ?>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Người Dùng</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/core.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/css/theme-default.css">
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/css/demo.css">
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #22c55e;
+            --text-color: #1f2a44;
+            --muted-color: #6b7280;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dcfce7 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            margin: 0;
+        }
+
         .container-p-y {
+            max-width: 900px;
+            margin: 2rem auto;
             padding: 2rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.8s ease-out;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         h2 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #1a3c34;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 0.5rem;
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
         }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+        }
+
         h5 {
-            font-size: 1.3rem;
-            font-weight: 500;
-            color: #2e4b5b;
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 2rem 0 1rem;
+            border-left: 4px solid var(--secondary-color);
+            padding-left: 1rem;
         }
-        p {
-            font-size: 1rem;
-            margin-bottom: 0.8rem;
-            color: #333;
+
+        .profile-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-item {
             display: flex;
             align-items: center;
-        }
-        p strong {
-            font-weight: 600;
-            color: #1a3c34;
-            width: 150px;
-            display: inline-block;
-        }
-        p span {
-            color: #555;
-            display: inline-block;
-        }
-        .btn {
-            font-size: 0.95rem;
-            padding: 0.6rem 1.2rem;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-            margin-right: 0.5rem;
-            margin-top: 1rem;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
-            color: #fff;
-        }
-        .btn-success:hover {
-            background-color: #218838;
-            border-color: #218838;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: #fff;
-        }
-        .btn-danger:hover {
-            background-color: #b02a37;
-            border-color: #b02a37;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        h2 + p {
             font-size: 1rem;
-            color: #666;
+            margin-bottom: 1rem;
+            color: var(--text-color);
         }
-        h2 + p a {
-            color: #007bff;
-            text-decoration: none;
+
+        .profile-item i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-right: 1rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .profile-item strong {
+            font-weight: 600;
+            color: var(--text-color);
+            width: 180px;
+            display: inline-block;
+        }
+
+        .profile-item span {
+            color: var(--muted-color);
+            flex: 1;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            font-size: 1rem;
             font-weight: 500;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
         }
-        h2 + p a:hover {
-            text-decoration: underline;
-            color: #0056b3;
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), #60a5fa);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #1e40af, var(--primary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, var(--secondary-color), #34d399);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(45deg, #16a34a, var(--secondary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #f87171);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(45deg, #b02a37, #dc3545);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .alert {
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+
+        .alert-info {
+            background-color: #e0f2fe;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container-p-y {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            h5 {
+                font-size: 1.3rem;
+            }
+
+            .profile-item {
+                font-size: 0.95rem;
+            }
+
+            .profile-item strong {
+                width: 140px;
+            }
+
+            .btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .profile-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .profile-item strong {
+                width: auto;
+            }
+
+            .btn-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -107,29 +247,78 @@ $familyProfile = isset($_SESSION['family_profile']) ? $_SESSION['family_profile'
         <div class="layout-page">
             <?php include __DIR__ . '/fragments/navbar.php'; ?>
             <div class="content-wrapper">
-                <div class="content-xxl flex-grow-1 container-p-y">
+                <div class="container-p-y">
                     <?php if ($user): ?>
-                        <h2>Hồ sơ người dùng</h2>
-                        <p><strong>Họ và tên:</strong> <span><?php echo htmlspecialchars($user['full_name'] ?? ''); ?></span></p>
-                        <p><strong>Tên đăng nhập:</strong> <span><?php echo htmlspecialchars($user['username'] ?? ''); ?></span></p>
-                        <p><strong>Email:</strong> <span><?php echo htmlspecialchars($user['email'] ?? ''); ?></span></p>
-                        <p><strong>Số điện thoại:</strong> <span><?php echo htmlspecialchars($user['phone_number'] ?? 'Không có thông tin'); ?></span></p>
-                        <p><strong>Địa chỉ:</strong> <span><?php echo htmlspecialchars($user['address'] ?? 'Không có thông tin'); ?></span></p>
-                        <p><strong>Vai trò:</strong> <span><?php echo htmlspecialchars($user['role'] ?? ''); ?></span></p>
+                        <h2>Hồ Sơ Người Dùng</h2>
+                        <div class="profile-card">
+                            <h5>Thông Tin Cá Nhân</h5>
+                            <div class="profile-item">
+                                <i class="fas fa-user"></i>
+                                <strong>Họ và tên:</strong>
+                                <span><?php echo htmlspecialchars($user['full_name'] ?? 'Không có thông tin'); ?></span>
+                            </div>
+                            <div class="profile-item">
+                                <i class="fas fa-user-circle"></i>
+                                <strong>Tên đăng nhập:</strong>
+                                <span><?php echo htmlspecialchars($user['username'] ?? 'Không có thông tin'); ?></span>
+                            </div>
+                            <div class="profile-item">
+                                <i class="fas fa-envelope"></i>
+                                <strong>Email:</strong>
+                                <span><?php echo htmlspecialchars($user['email'] ?? 'Không có thông tin'); ?></span>
+                            </div>
+                            <div class="profile-item">
+                                <i class="fas fa-phone"></i>
+                                <strong>Số điện thoại:</strong>
+                                <span><?php echo htmlspecialchars($user['phone_number'] ?? 'Không có thông tin'); ?></span>
+                            </div>
+                            <div class="profile-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <strong>Địa chỉ:</strong>
+                                <span><?php echo htmlspecialchars($user['address'] ?? 'Không có thông tin'); ?></span>
+                            </div>
+                            <div class="profile-item">
+                                <i class="fas fa-user-tag"></i>
+                                <strong>Vai trò:</strong>
+                                <span><?php echo htmlspecialchars($user['role'] ?? 'Không có thông tin'); ?></span>
+                            </div>
+                        </div>
 
                         <?php if ($user['role'] === 'FAMILY'): ?>
-                            <h5>Thông tin gia đình</h5>
-                            <p><strong>Tên trẻ:</strong> <span><?php echo htmlspecialchars($familyProfile['child_name'] ?? 'Không có thông tin'); ?></span></p>
-                            <p><strong>Tuổi trẻ:</strong> <span><?php echo htmlspecialchars($familyProfile['child_age'] ?? 'Không có thông tin'); ?></span></p>
-                            <p><strong>Nhu cầu cụ thể:</strong> <span><?php echo htmlspecialchars($familyProfile['specific_needs'] ?? 'Không có thông tin'); ?></span></p>
-                            <p><strong>Vị trí ưu tiên:</strong> <span><?php echo htmlspecialchars($familyProfile['preferred_location'] ?? 'Không có thông tin'); ?></span></p>
-                            <a href="?action=home" class="btn btn-primary">Quay lại trang chủ</a>
-                            <a href="?action=update_user" class="btn btn-success">Cập nhật hồ sơ</a>
-                            <a href="?action=logout" class="btn btn-danger">Đăng xuất</a>
+                            <div class="profile-card">
+                                <h5>Thông Tin Gia Đình</h5>
+                                <div class="profile-item">
+                                    <i class="fas fa-child"></i>
+                                    <strong>Tên trẻ:</strong>
+                                    <span><?php echo htmlspecialchars($familyProfile['child_name'] ?? 'Không có thông tin'); ?></span>
+                                </div>
+                                <div class="profile-item">
+                                    <i class="fas fa-birthday-cake"></i>
+                                    <strong>Tuổi trẻ:</strong>
+                                    <span><?php echo htmlspecialchars($familyProfile['child_age'] ?? 'Không có thông tin'); ?></span>
+                                </div>
+                                <div class="profile-item">
+                                    <i class="fas fa-notes-medical"></i>
+                                    <strong>Nhu cầu cụ thể:</strong>
+                                    <span><?php echo htmlspecialchars($familyProfile['specific_needs'] ?? 'Không có thông tin'); ?></span>
+                                </div>
+                                <div class="profile-item">
+                                    <i class="fas fa-location-dot"></i>
+                                    <strong>Vị trí ưu tiên:</strong>
+                                    <span><?php echo htmlspecialchars($familyProfile['preferred_location'] ?? 'Không có thông tin'); ?></span>
+                                </div>
+                            </div>
                         <?php endif; ?>
+
+                        <div class="btn-container">
+                            <a href="?action=home" class="btn btn-primary"><i class="fas fa-home"></i> Quay lại trang chủ</a>
+                            <a href="?action=update_user" class="btn btn-success"><i class="fas fa-edit"></i> Cập nhật hồ sơ</a>
+                            <a href="?action=logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                        </div>
                     <?php else: ?>
-                        <h2>Bạn chưa đăng nhập</h2>
-                        <p>Vui lòng <a href="?action=login">đăng nhập</a> để xem hồ sơ của bạn.</p>
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-exclamation-circle"></i> Bạn chưa đăng nhập. Vui lòng <a href="?action=login">đăng nhập</a> để xem hồ sơ của bạn.
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -142,9 +331,6 @@ $familyProfile = isset($_SESSION['family_profile']) ? $_SESSION['family_profile'
 <script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/bootstrap.js"></script>
 <script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
 <script src="<?php echo $baseUrl; ?>/static/assets/vendor/js/menu.js"></script>
-<script src="<?php echo $baseUrl; ?>/static/assets/vendor/libs/apex-charts/apexcharts.js"></script>
 <script src="<?php echo $baseUrl; ?>/static/assets/js/main.js"></script>
-<script src="<?php echo $baseUrl; ?>/static/assets/js/dashboards-analytics.js"></script>
-<script async defer src="https://buttons.github.io/buttons.js"></script>
 </body>
 </html>
