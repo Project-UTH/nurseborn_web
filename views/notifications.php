@@ -17,6 +17,36 @@ $baseUrl = '/nurseborn';
     <meta name="_csrf_header" content="X-CSRF-TOKEN">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Đảm bảo layout-container và layout-page chiếm toàn bộ chiều cao */
+.layout-container {
+    display: flex;
+    min-height: 100vh; /* Chiều cao tối thiểu bằng viewport */
+}
+
+/* Đảm bảo layout-menu chiếm toàn bộ chiều cao của layout-container */
+#layout-menu {
+    height: 100%; /* Chiếm toàn bộ chiều cao của container cha */
+    min-height: 100vh; /* Đảm bảo chiều cao tối thiểu bằng viewport */
+}
+
+/* Đảm bảo layout-page có thể mở rộng để chứa nội dung */
+.layout-page {
+    flex: 1; /* Mở rộng để chiếm không gian còn lại */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Đảm bảo content-wrapper mở rộng để chứa nội dung */
+.content-wrapper {
+    flex: 1; /* Mở rộng để chiếm không gian còn lại */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Đảm bảo nội dung bên trong content-wrapper mở rộng */
+.content-xxl {
+    flex: 1; /* Mở rộng để chiếm không gian còn lại */
+}
         :root {
             --primary-color: #2563eb;
             --secondary-color: #22c55e;

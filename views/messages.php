@@ -19,6 +19,7 @@ error_log("Rendering messages.php with user: " . print_r($user, true));
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+     <?php include __DIR__ . '/fragments/head.php'; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tin nhắn - NurseBorn</title>
@@ -35,6 +36,36 @@ error_log("Rendering messages.php with user: " . print_r($user, true));
     <link rel="stylesheet" href="<?php echo $baseUrl; ?>/static/assets/vendor/libs/apex-charts/apex-charts.css">
     <!-- Custom CSS -->
     <style>
+        /* Đảm bảo layout-container và layout-page chiếm toàn bộ chiều cao */
+.layout-container {
+    display: flex;
+    min-height: 100vh; /* Chiều cao tối thiểu bằng viewport */
+}
+
+/* Đảm bảo layout-menu chiếm toàn bộ chiều cao của layout-container */
+#layout-menu {
+    height: 100%; /* Chiếm toàn bộ chiều cao của container cha */
+    min-height: 100vh; /* Đảm bảo chiều cao tối thiểu bằng viewport */
+}
+
+/* Đảm bảo layout-page có thể mở rộng để chứa nội dung */
+.layout-page {
+    flex: 1; /* Mở rộng để chiếm không gian còn lại */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Đảm bảo content-wrapper mở rộng để chứa nội dung */
+.content-wrapper {
+    flex: 1; /* Mở rộng để chiếm không gian còn lại */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Đảm bảo nội dung bên trong content-wrapper mở rộng */
+.content-xxl {
+    flex: 1; /* Mở rộng để chiếm không gian còn lại */
+}
         /* Đảm bảo box-sizing cho toàn bộ trang */
         *, *:before, *:after {
             box-sizing: border-box;
