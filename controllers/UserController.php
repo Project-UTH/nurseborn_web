@@ -129,58 +129,73 @@ switch ($action) {
         break;
 
     case 'web_income':
-        if (isLoggedIn() && getUserRole() === 'ADMIN') {
-            $user = $userModel->getUserById($_SESSION['user_id']);
-            if (!$user) {
-                error_log("User not found for ID: {$_SESSION['user_id']}");
-                $_SESSION['error'] = 'Người dùng không tồn tại';
-                session_destroy();
-                header('Location: ?action=login');
-                exit;
-            }
-
-            // Đếm số gia đình và y tá
-            $familyCount = $userModel->countUsersByRole('FAMILY');
-            $nurseCount = $userModel->countUsersByRole('NURSE');
-
-            // Lấy thống kê thu nhập ngày hiện tại
-            $todayStats = $bookingModel->getTodayIncomeStats();
-
-            // Lấy bộ lọc từ query string
-            $filterType = isset($_GET['filterType']) ? $_GET['filterType'] : null;
-            $filterValue = isset($_GET['filterValue']) ? $_GET['filterValue'] : null;
-
-            // Lấy thống kê thu nhập theo bộ lọc
-            $incomeStats = $bookingModel->getIncomeStats($filterType, $filterValue);
-
-            // Lấy dữ liệu biểu đồ
-            $chartData = $bookingModel->getChartData($filterType, $filterValue);
-
-            // Chuẩn bị dữ liệu cho view
-            $webIncomeData = [
-                'familyCount' => $familyCount,
-                'nurseCount' => $nurseCount,
-                'todayBookingCount' => $todayStats['today_booking_count'],
-                'todayWebIncome' => $todayStats['today_web_income'],
-                'todayNurseIncome' => $todayStats['today_nurse_income'],
-                'todayNurseAfterDiscount' => $todayStats['today_nurse_after_discount'],
-                'bookingCount' => $incomeStats['booking_count'],
-                'webIncome' => $incomeStats['web_income'],
-                'nurseIncome' => $incomeStats['nurse_income'],
-                'nurseAfterDiscount' => $incomeStats['nurse_after_discount'],
-                'filterType' => $filterType,
-                'filterValue' => $filterValue,
-                'chartLabels' => json_encode($chartData['labels']),
-                'chartData' => json_encode($chartData['data'])
-            ];
-
-            $_SESSION['user'] = $user;
-            include __DIR__ . '/../views/web_income.php';
-        } else {
-            $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
+    if (isLoggedIn() && getUserRole() === 'ADMIN') {
+        $user = $userModel->getUserById($_SESSION['user_id']);
+        if (!$user) {
+            error_log("User not found for ID: {$_SESSION['user_id']}");
+            $_SESSION['error'] = 'Người dùng không tồn tại';
+            session_destroy();
             header('Location: ?action=login');
+            exit;
         }
-        break;
+
+        // Đếm số gia đình và y tá
+        $familyCount = $userModel->countUsersByRole('FAMILY');
+        $nurseCount = $userModel->countUsersByRole('NURSE');
+
+        // Lấy thống kê thu nhập ngày hiện tại
+        $todayStats = $bookingModel->getTodayIncomeStats();
+
+        // Lấy bộ lọc từ query string, đặt mặc định nếu không có
+        $filterType = isset($_GET['filterType']) ? $_GET['filterType'] : 'monthly';
+        $filterValue = isset($_GET['filterValue']) ? $_GET['filterValue'] : date('Y-m'); // Mặc định là tháng hiện tại
+
+        // Validate filterType
+        if (!in_array($filterType, ['weekly', 'monthly', 'yearly'])) {
+            $filterType = 'monthly';
+            $filterValue = date('Y-m');
+        }
+
+        // Validate filterValue dựa trên filterType
+        if ($filterType === 'weekly' && !preg_match('/^\d{4}-W\d{2}$/', $filterValue)) {
+            $filterValue = date('Y-\WW'); // Mặc định tuần hiện tại
+        } elseif ($filterType === 'monthly' && !preg_match('/^\d{4}-\d{2}$/', $filterValue)) {
+            $filterValue = date('Y-m');
+        } elseif ($filterType === 'yearly' && !preg_match('/^\d{4}$/', $filterValue)) {
+            $filterValue = date('Y');
+        }
+
+        // Lấy thống kê thu nhập theo bộ lọc
+        $incomeStats = $bookingModel->getIncomeStats($filterType, $filterValue);
+
+        // Lấy dữ liệu biểu đồ
+        $chartData = $bookingModel->getChartData($filterType, $filterValue);
+
+        // Chuẩn bị dữ liệu cho view
+        $webIncomeData = [
+            'familyCount' => $familyCount ?? 0,
+            'nurseCount' => $nurseCount ?? 0,
+            'todayBookingCount' => $todayStats['today_booking_count'] ?? 0,
+            'todayWebIncome' => $todayStats['today_web_income'] ?? 0,
+            'todayNurseIncome' => $todayStats['today_nurse_income'] ?? 0,
+            'todayNurseAfterDiscount' => $todayStats['today_nurse_after_discount'] ?? 0,
+            'bookingCount' => $incomeStats['booking_count'] ?? 0,
+            'webIncome' => $incomeStats['web_income'] ?? 0,
+            'nurseIncome' => $incomeStats['nurse_income'] ?? 0,
+            'nurseAfterDiscount' => $incomeStats['nurse_after_discount'] ?? 0,
+            'filterType' => $filterType,
+            'filterValue' => $filterValue,
+            'chartLabels' => $chartData['labels'] ?? [], // Không cần json_encode ở đây
+            'chartData' => $chartData['data'] ?? [] // Không cần json_encode ở đây
+        ];
+
+        $_SESSION['user'] = $user;
+        include __DIR__ . '/../views/web_income.php';
+    } else {
+        $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
+        header('Location: ?action=login');
+    }
+    break;
 
     case 'nurse_ranking':
         if (isLoggedIn() && getUserRole() === 'ADMIN') {
