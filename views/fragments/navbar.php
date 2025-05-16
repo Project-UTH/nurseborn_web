@@ -17,50 +17,63 @@ $role = $user ? htmlspecialchars($user['role']) : 'Khách';
 
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
         <ul class="navbar-nav flex-row align-items-center ms-auto">
-            <!-- Người dùng -->
-            <li class="nav-item navbar-dropdown dropdown-user dropdown">
-                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
-                    <div class="avatar avatar-online">
-                        <img src="<?php echo $baseUrl . $avatar; ?>" alt="Ảnh đại diện" class="rounded-circle" />
-                    </div>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item" href="?action=user_profile">
-                            <div class="d-flex align-items-center">
-                                <div class="flex-shrink-0 me-3">
-                                    <div class="avatar avatar-online">
-                                        <img src="<?php echo $baseUrl . $avatar; ?>" alt="Ảnh đại diện" class="rounded-circle" />
+            <?php if (isLoggedIn()): ?>
+                <!-- Người dùng đã đăng nhập: Hiển thị dropdown -->
+                <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                    <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                        <div class="avatar avatar-online">
+                            <img src="<?php echo $baseUrl . $avatar; ?>" alt="Ảnh đại diện" class="rounded-circle" />
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="?action=user_profile">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="avatar avatar-online">
+                                            <img src="<?php echo $baseUrl . $avatar; ?>" alt="Ảnh đại diện" class="rounded-circle" />
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <span class="fw-semibold d-block"><?php echo $fullName; ?></span>
+                                        <small class="text-muted"><?php echo $role; ?></small>
                                     </div>
                                 </div>
-                                <div class="flex-grow-1">
-                                    <span class="fw-semibold d-block"><?php echo $fullName; ?></span>
-                                    <small class="text-muted"><?php echo $role; ?></small>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <div class="dropdown-divider"></div>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="?action=user_profile">
-                            <i class="bx bx-user me-2"></i>
-                            <span class="align-middle">Hồ sơ của tôi</span>
-                        </a>
-                    </li>
-                    <li>
-                        <div class="dropdown-divider"></div>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="?action=logout">
-                            <i class="bx bx-power-off me-2"></i>
-                            <span class="align-middle">Đăng xuất</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <!--/ Người dùng -->
+                            </a>
+                        </li>
+                        <li>
+                            <div class="dropdown-divider"></div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="?action=user_profile">
+                                <i class="bx bx-user me-2"></i>
+                                <span class="align-middle">Hồ sơ của tôi</span>
+                            </a>
+                        </li>
+                        <li>
+                            <div class="dropdown-divider"></div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="?action=logout">
+                                <i class="bx bx-power-off me-2"></i>
+                                <span class="align-middle">Đăng xuất</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            <?php else: ?>
+                <!-- Người dùng chưa đăng nhập: Hiển thị nút Đăng nhập và Đăng ký -->
+                <li class="nav-item">
+                    <a class="nav-link" href="?action=login">
+                        <button class="btn btn-outline-light btn-sm">Đăng nhập</button>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="?action=role_selection">
+                        <button class="btn btn-primary btn-sm">Đăng ký</button>
+                    </a>
+                </li>
+            <?php endif; ?>
         </ul>
     </div>
 </nav>
