@@ -49,12 +49,19 @@ $messageActions = [
 // Danh sách các action thuộc AdminController
 $adminActions = [
     'admin_approved_nurses',
-    'admin_family_accounts'
+    'admin_family_accounts',
+    'admin_bookings', // Đã thêm đúng action admin_bookings
+    'admin_feedback'
 ];
 
 // Danh sách các action thuộc ReviewNurseController
 $reviewNurseActions = [
     'review_nurse'
+];
+
+// Danh sách các action thuộc FeedbackController
+$feedbackActions = [
+    'delete_feedback'
 ];
 
 // Lấy action từ query string, mặc định là 'home'
@@ -76,11 +83,14 @@ try {
         $controllerFile = __DIR__ . '/controllers/AdminController.php';
     } elseif (in_array($action, $reviewNurseActions)) {
         $controllerFile = __DIR__ . '/controllers/ReviewNurseController.php';
+    } elseif (in_array($action, $feedbackActions)) {
+        $controllerFile = __DIR__ . '/controllers/FeedbackController.php';
     } else {
         $controllerFile = __DIR__ . '/controllers/UserController.php';
     }
 
     if (file_exists($controllerFile)) {
+        error_log("Debug: Đang include controller file: $controllerFile");
         require_once $controllerFile;
     } else {
         error_log("Controller file not found: $controllerFile");

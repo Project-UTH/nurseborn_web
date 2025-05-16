@@ -767,7 +767,7 @@ class BookingModel {
         return $ranking;
     }
 
-    // Thêm phương thức getBookingById để lấy thông tin lịch đặt theo booking_id
+    // Lấy thông tin lịch đặt theo booking_id
     public function getBookingById($bookingId) {
         $stmt = $this->conn->prepare(
             "SELECT b.*, u.full_name AS nurse_full_name 
@@ -795,5 +795,98 @@ class BookingModel {
 
         return $booking;
     }
+
+    // Lấy tất cả lịch đặt
+    public function getAllBookings() {
+        $stmt = $this->conn->prepare(
+            "SELECT b.*, 
+                    u1.full_name AS nurse_full_name, 
+                    u2.full_name AS family_full_name 
+             FROM bookings b 
+             JOIN users u1 ON b.nurse_user_id = u1.user_id 
+             JOIN users u2 ON b.family_user_id = u2.user_id 
+             ORDER BY b.booking_date DESC"
+        );
+
+        if (!$stmt) {
+            error_log("Prepare failed in getAllBookings: " . $this->conn->error);
+            throw new Exception("Prepare failed: " . $this->conn->error);
+        }
+
+        if (!$stmt->execute()) {
+            error_log("Execute failed in getAllBookings: " . $stmt->error);
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $bookings = $result->fetch_all(MYSQLI_ASSOC);
+
+        $stmt->close();
+
+        return $bookings;
+    }
+
+    // Lấy tất cả lịch đặt trong một ngày cụ thể
+    public function getBookingsByDate($date) {
+        $stmt = $this->conn->prepare(
+            "SELECT b.*, 
+                    u1.full_name AS nurse_full_name, 
+                    u2.full_name AS family_full_name 
+             FROM bookings b 
+             JOIN users u1 ON b.nurse_user_id = u1.user_id 
+             JOIN users u2 ON b.family_user_id = u2.user_id 
+             WHERE b.booking_date = ? 
+             ORDER BY b.start_time ASC"
+        );
+
+        if (!$stmt) {
+            error_log("Prepare failed in getBookingsByDate: " . $this->conn->error);
+            throw new Exception("Prepare failed: " . $this->conn->error);
+        }
+
+        $stmt->bind_param("s", $date);
+
+        if (!$stmt->execute()) {
+            error_log("Execute failed in getBookingsByDate: " . $stmt->error);
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $bookings = $result->fetch_all(MYSQLI_ASSOC);
+
+        $stmt->close();
+
+        return $bookings;
+    }
+
+    // Xóa lịch đặt
+    public function deleteBooking($bookingId) {
+        // Xóa các thông báo liên quan đến lịch đặt trước
+        $stmt = $this->conn->prepare("DELETE FROM notifications WHERE booking_id = ?");
+        if (!$stmt) {
+            error_log("Prepare failed in deleteBooking (notifications): " . $this->conn->error);
+            throw new Exception("Prepare failed: " . $this->conn->error);
+        }
+        $stmt->bind_param("i", $bookingId);
+        if (!$stmt->execute()) {
+            error_log("Execute failed in deleteBooking (notifications): " . $stmt->error);
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+        $stmt->close();
+
+        // Sau đó xóa lịch đặt
+        $stmt = $this->conn->prepare("DELETE FROM bookings WHERE booking_id = ?");
+        if (!$stmt) {
+            error_log("Prepare failed in deleteBooking (bookings): " . $this->conn->error);
+            throw new Exception("Prepare failed: " . $this->conn->error);
+        }
+        $stmt->bind_param("i", $bookingId);
+        if (!$stmt->execute()) {
+            error_log("Execute failed in deleteBooking (bookings): " . $stmt->error);
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+        $stmt->close();
+    }
 }
 ?>
+

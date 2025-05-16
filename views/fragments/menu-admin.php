@@ -60,6 +60,18 @@ $baseUrl = '/nurseborn/';
                 <div>Xếp hạng y tá</div>
             </a>
         </li>
+        <li class="menu-item <?php echo isset($_GET['action']) && $_GET['action'] === 'admin_feedback' ? 'active' : ''; ?>">
+            <a href="?action=admin_feedback" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-trophy"></i>
+                <div>Đánh giá</div>
+            </a>
+        </li>
+         <li class="menu-item <?php echo isset($_GET['action']) && $_GET['action'] === 'admin_bookings' ? 'active' : ''; ?>">
+            <a href="?action=admin_bookings" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-trophy"></i>
+                <div>Danh sách lịch đặt</div>
+            </a>
+        </li>
 
         <!-- Logout -->
         <li class="menu-item">
