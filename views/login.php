@@ -161,6 +161,7 @@ $baseUrl = '/nurseborn';
 
         .alert-error {
             background-color: #f8d7da;
+            border: 1a
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
@@ -193,6 +194,19 @@ $baseUrl = '/nurseborn';
 
         .btn-primary:hover {
             background: linear-gradient(45deg, #1e40af, var(--primary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6b7280, #9ca3af);
+            border: none;
+            color: #fff;
+            width: 100%;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(45deg, #4b5563, #6b7280);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
@@ -319,6 +333,9 @@ $baseUrl = '/nurseborn';
                             <button class="btn btn-primary" type="submit"><i class="fas fa-sign-in-alt"></i> Đăng nhập</button>
                         </div>
                     </form>
+                    <div class="mb-3">
+                        <a href="?action=home" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Quay lại trang chủ</a>
+                    </div>
 
                     <p class="text-center">
                         <span>Bạn chưa có tài khoản?</span>

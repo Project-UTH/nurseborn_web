@@ -195,7 +195,7 @@ class NurseProfileModel {
     }
 
     // Lấy tất cả hồ sơ y tá đã được phê duyệt
-    public function getApprovedNurseProfiles() {
+    public function getAllApprovedNurseProfiles() {
         $stmt = $this->conn->prepare(
             "SELECT np.*, u.full_name, u.is_verified, u.username, u.email, u.phone_number, u.address, u.role 
              FROM nurse_profiles np 

@@ -55,18 +55,11 @@ switch ($action) {
             }
 
             // Lấy danh sách y tá đã duyệt
-            $approvedNurses = $nurseProfileModel->getApprovedNurseProfiles();
-
-            // Lấy số lượng đơn hoàn thành cho mỗi y tá
-            $nurseBookingCounts = $bookingModel->getNurseRanking();
-            $bookingCountsByUserId = [];
-            foreach ($nurseBookingCounts as $nurseData) {
-                $bookingCountsByUserId[$nurseData['nurse_user_id']] = $nurseData['booking_count'];
-            }
-
-            // Thêm số lượng đơn vào danh sách y tá
-            foreach ($approvedNurses as &$nurse) {
-                $nurse['booking_count'] = $bookingCountsByUserId[$nurse['user_id']] ?? 0;
+            $approvedNurses = $nurseProfileModel->getAllApprovedNurseProfiles();
+            if (!$approvedNurses) {
+                error_log("Lỗi khi lấy danh sách y tá đã duyệt");
+                $_SESSION['error'] = 'Lỗi khi lấy danh sách y tá đã duyệt';
+                $approvedNurses = [];
             }
 
             $_SESSION['user'] = $user;

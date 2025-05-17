@@ -214,7 +214,6 @@ $approvedNurses = $approvedNurses ?? [];
                                         <th>Email</th>
                                         <th>Số Điện Thoại</th>
                                         <th>Địa Chỉ</th>
-                                        <th>Số Lượng Đơn Hoàn Thành</th>
                                         <th>Hành Động</th>
                                     </tr>
                                 </thead>
@@ -230,7 +229,6 @@ $approvedNurses = $approvedNurses ?? [];
                                                 <td><?php echo htmlspecialchars($nurse['email']); ?></td>
                                                 <td><?php echo htmlspecialchars($nurse['phone_number'] ?? 'Không có thông tin'); ?></td>
                                                 <td><?php echo htmlspecialchars($nurse['address'] ?? 'Không có thông tin'); ?></td>
-                                                <td class="booking-count"><?php echo htmlspecialchars($nurse['booking_count']); ?></td>
                                                 <td>
                                                     <form method="POST" action="?action=admin_approved_nurses" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản y tá này?');">
                                                         <input type="hidden" name="action_type" value="delete_nurse">

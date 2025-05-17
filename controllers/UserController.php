@@ -838,7 +838,7 @@ switch ($action) {
     case 'nursepage':
         
             // Lấy danh sách y tá đã được phê duyệt từ database
-            $nurses = $nurseProfileModel->getApprovedNurseProfiles();
+            $nurses = $nurseProfileModel->getAllApprovedNurseProfiles();
             include __DIR__ . '/../views/nursepage.php';
      break;
 

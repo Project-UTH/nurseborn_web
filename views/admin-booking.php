@@ -142,6 +142,27 @@ error_log("Debug: Dữ liệu bookings trong admin-booking.php: " . print_r($boo
         .alert .btn-close:hover {
             opacity: 1;
         }
+
+        /* Định dạng cho cột Trạng Thái */
+        .status {
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 12px;
+            display: inline-block;
+            text-align: center;
+        }
+        .status-completed {
+            background-color: #e6ffed;
+            color: #28a745;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #d39e00;
+        }
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -180,6 +201,7 @@ error_log("Debug: Dữ liệu bookings trong admin-booking.php: " . print_r($boo
                                             <th>Ngày đặt</th>
                                             <th>Thời gian</th>
                                             <th>Giá</th>
+                                            <th>Trạng Thái</th> <!-- Thêm cột Trạng Thái -->
                                             <th>Hành động</th>
                                         </tr>
                                     </thead>
@@ -200,6 +222,37 @@ error_log("Debug: Dữ liệu bookings trong admin-booking.php: " . print_r($boo
                                                     ?>
                                                 </td>
                                                 <td><?php echo number_format($booking['price'] ?? 0) . ' VND'; ?></td>
+                                                <td>
+                                                    <?php
+                                                    $status = $booking['status'] ?? 'N/A';
+                                                    $statusClass = '';
+                                                    switch (strtoupper($status)) {
+                                                        case 'COMPLETED':
+                                                            $statusClass = 'status-completed';
+                                                            $statusText = 'Hoàn thành';
+                                                            break;
+                                                        case 'ACCEPTED':
+                                                            $statusClass = 'status-confirmed';
+                                                            $statusText = 'Đã xác nhận';
+                                                            break;
+                                                        case 'PENDING':
+                                                            $statusClass = 'status-pending';
+                                                            $statusText = 'Đang chờ';
+                                                            break;
+                                                        case 'CANCELLED':
+                                                            $statusClass = 'status-cancelled';
+                                                            $statusText = 'Đã hủy';
+                                                            break;
+                                                        default:
+                                                            $statusClass = '';
+                                                            $statusText = $status;
+                                                            break;
+                                                    }
+                                                    ?>
+                                                    <span class="status <?php echo $statusClass; ?>">
+                                                        <?php echo htmlspecialchars($statusText); ?>
+                                                    </span>
+                                                </td>
                                                 <td class="actions">
                                                     <form method="POST" action="?action=admin_bookings" style="display:inline;">
                                                         <input type="hidden" name="action_type" value="delete_booking">
@@ -230,4 +283,3 @@ error_log("Debug: Dữ liệu bookings trong admin-booking.php: " . print_r($boo
 <script src="<?php echo $baseUrl; ?>/static/assets/js/main.js"></script>
 </body>
 </html>
-
